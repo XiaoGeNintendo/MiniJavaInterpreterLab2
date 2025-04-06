@@ -1,0 +1,55 @@
+int main(){
+    // One-dimensional array
+    int[] arr1; // legal, null (default value)
+    int[] arr2 = null; // legal, null
+    int[] arr3 = {1, 2, 3, 4, 5}; // legal, [1, 2, 3, 4, 5]
+    int[] arr4 = {1, 2, 3, 4, 5, }; // legal, [1, 2, 3, 4, 5]
+    int[] arr5 = {'a', 'b', 'c', 'd', 'e'}; // legal, [97, 98, 99, 100, 101]
+    int[] arr6 = new int[] {1, 2, 3, 4, 5}; // legal, [1, 2, 3, 4, 5]
+    int[] arr7 = new int[5]; // legal, [0, 0, 0, 0, 0]
+    int[] arr8 = arr7; // legal, [0, 0, 0, 0, 0]
+
+    println(arr1);
+    println(arr2);
+    println(arr3);
+    println(arr4);
+    println(arr5);
+    println(arr6);
+    println(arr7);
+    println(arr8);
+    //...
+    // Multidimensional array
+    int[][] arr10 = {{1, 2}, {3, 4}}; // legal, [[1,2],[3,4]]
+    int[][] arr11 = {null, null}; // legal, [null, null]
+    int[][] arr12 = new int[2][]; // legal, [null, null]
+    println(arr10);
+    println(arr11);
+    println(arr12);
+
+    //Compare
+    int[] arr1 = null;
+    boolean b1 = arr1 == null; // true
+    println(b1);
+    int[] arr2 = {1,2,3};
+    int[] arr3 = {1,2,3};
+    boolean b2 = arr2 == arr3; // false
+    println(b2);
+    arr3=arr2;
+    boolean b3=arr2==arr3;
+    println(b3);
+
+    //Assignment
+    int[] arr;
+    int[] temp = {1,2,3};
+    arr = temp; // legal
+    println(arr);
+    arr = null; // legal
+    println(arr);
+    arr = new int[] {1,2,3}; // legal
+    println(arr);
+    arr = new int[3]; // legal
+    println(arr);
+    arr = "123"; // illegal, type error
+    println(arr);
+    return 0;
+}
