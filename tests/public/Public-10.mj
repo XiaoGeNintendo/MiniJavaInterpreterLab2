@@ -1,5 +1,5 @@
 
-// to_stirng()
+// to_string()
 
 class A {
     string to_string() {

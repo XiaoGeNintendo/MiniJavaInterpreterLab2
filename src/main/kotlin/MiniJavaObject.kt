@@ -1,16 +1,14 @@
 package cn.edu.nju.cs
 
-class MiniJavaObject(val type: String, var value: Any?, val isIntLiteral:Boolean = false){
+class MiniJavaObject(val type: String, var value: Any?, var realType: String = type, val isIntLiteral:Boolean = false){
 
     /**
      * Maybe frequently used if the object is an Object
      */
     fun valueAsMap() = value as HashMap<String,MiniJavaObject>
 
-    fun getRealClass() = valueAsMap()["Object::#class"]!!.value.toString()
-
-    fun copy(type: String = this.type, value: Any? = this.value, isIntLiteral: Boolean = false):MiniJavaObject{
-        return MiniJavaObject(type,value,isIntLiteral)
+    fun copy(type: String = this.type, value: Any? = this.value, realType: String = this.realType, isIntLiteral: Boolean = false):MiniJavaObject{
+        return MiniJavaObject(type,value,realType, isIntLiteral)
     }
 
     override fun toString(): String {
@@ -40,8 +38,8 @@ class MiniJavaObject(val type: String, var value: Any?, val isIntLiteral:Boolean
     }
 
     fun deSuper(classes: HashMap<String,MiniJavaClass>):MiniJavaObject{
-        val thatSuper=this.copy(type=classes[this.getRealClass()]!!.parent)
-        thatSuper.valueAsMap()["Object::#class"]=MiniJavaObject("String",thatSuper.type)
+        val p=classes[this.realType]!!.parent
+        val thatSuper=this.copy(type=p,realType=p)
         return thatSuper
     }
 }

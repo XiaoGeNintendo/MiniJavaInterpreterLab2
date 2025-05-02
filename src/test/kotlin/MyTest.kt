@@ -95,4 +95,9 @@ class MyTest {
         general("public/$fn")
     }
 
+    @ParameterizedTest
+    @ValueSource(strings=["HashMap","LinkedList","Stack"])
+    fun more_lab3(fn: String){
+        general("more/$fn")
+    }
 }

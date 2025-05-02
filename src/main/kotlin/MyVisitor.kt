@@ -72,7 +72,7 @@ class MyVisitor : AbstractParseTreeVisitor<Any>(), MiniJavaParserVisitor<Any> {
         registerMethod(FunctionFactory.create2("#=","char","char","char",{a,b->a.value=b.value;a.copy()}))
         registerMethod(FunctionFactory.create2("#=","string","string","string",{a,b->a.value=b.value;a.copy()}))
         registerMethod(FunctionFactory.create2("#=","boolean","boolean","boolean",{a,b->a.value=b.value;a.copy()}))
-        registerMethod(FunctionFactory.create2("#=","Any","*","*",{a,b-> TypeChecker.checkAndThrow(a.type,b.type);a.value=b.value;a.copy()}))
+        registerMethod(FunctionFactory.create2("#=","Any","*","*",{a,b-> TypeChecker.checkAndThrow(a.type,b.type);a.value=b.value;a.realType=b.realType;a.copy()}))
 
         registerMethod(FunctionFactory.create2("#+=","int","int","int",{a,b->a.value=a.value!!.i()+b.value!!.i();a.copy()}))
         registerMethod(FunctionFactory.create2("#+=","string","string","char",{a,b->a.value=a.value.toString()+b.value!!.i().toByte().toInt().toChar();a.copy()}))
@@ -90,18 +90,42 @@ class MyVisitor : AbstractParseTreeVisitor<Any>(), MiniJavaParserVisitor<Any> {
         registerMethod(FunctionFactory.create2("#^=","int","int","int",{a,b->a.value=a.value!!.i() xor b.value!!.i();a.copy()}))
 
         registerMethod(FunctionFactory.create1("assert","void","boolean",{a-> if(!(a.value as Boolean)) throw AssertException("Assertion failed"); unitObject}))
+
         registerMethod(FunctionFactory.create1("print","void","int",{a-> output(a.value!!);unitObject}))
         registerMethod(FunctionFactory.create1("print","void","char",{a-> output(a.value!!.c());unitObject}))
         registerMethod(FunctionFactory.create1("print","void","string",{a-> output(a.value!!);unitObject}))
         registerMethod(FunctionFactory.create1("print","void","boolean",{a-> output(a.value!!);unitObject}))
+        registerMethod(FunctionFactory.create1("print","void","<null>",{a-> output("null");unitObject}))
+        registerMethod(FunctionFactory.create1("print","void","Object",{a->
+            if(a.value==null){
+                output("null")
+                return@create1 unitObject
+            }
+            val clz=classes[a.realType]!!
+            val name=clz.functionLookupCache["to_string"]!!
+            val res=callMethod(name, arrayListOf(), a)
+            output(res.value.toString())
+            unitObject
+        }))
         registerMethod(FunctionFactory.create1("print","void","*",{a-> output(a.value);unitObject}))
 
         registerMethod(FunctionFactory.create1("println","void","int",{a-> outputLn(a.value!!);unitObject}))
         registerMethod(FunctionFactory.create1("println","void","char",{a-> outputLn(a.value!!.c());unitObject}))
         registerMethod(FunctionFactory.create1("println","void","string",{a-> outputLn(a.value!!);unitObject}))
         registerMethod(FunctionFactory.create1("println","void","boolean",{a-> outputLn(a.value!!);unitObject}))
+        registerMethod(FunctionFactory.create1("println","void","Object",{a->
+            if(a.value==null){
+                outputLn("null")
+                return@create1 unitObject
+            }
+            val clz=classes[a.realType]!!
+            val name=clz.functionLookupCache["to_string()"]!!
+            val res=callMethod(name, arrayListOf(), a)
+            outputLn(res.value.toString())
+            unitObject
+        }))
         registerMethod(FunctionFactory.create1("println","void","*",{a-> outputLn(a.value);unitObject}))
-        registerMethod(MiniJavaMethod.NativeMethod("println","void", arrayListOf(),{_->outputLn("");unitObject}))
+        registerMethod(FunctionFactory.create0("println","void",{outputLn("");unitObject}))
 
         registerMethod(FunctionFactory.create1("atoi","int","string",{a->MiniJavaObject("int",a.value!!.toString().toInt())}))
         registerMethod(FunctionFactory.create1("itoa","string","int",{a->MiniJavaObject("string",a.value!!.toString())}))
@@ -183,11 +207,15 @@ class MyVisitor : AbstractParseTreeVisitor<Any>(), MiniJavaParserVisitor<Any> {
     private fun addObjectClass(){
         val obj=MiniJavaClass("Object","YOU SHOULD NEVER REACH HERE!!!")
         obj.cached=true
-        obj.fields["#class"]= MiniJavaClass.Field("String",null)
 
-        obj.fieldLookupCache["#class"]="Object::#class"
+        val to_string=MiniJavaMethod.NativeMethod("Object::to_string","string", arrayListOf()){
+            arg ->
+            MiniJavaObject("string", arg[0].realType)
+        }
 
-        //TODO to_string
+        obj.methods["to_string()"]=to_string
+        registerMethod(to_string)
+        obj.functionLookupCache["to_string()"]="Object::to_string"
 
         classes["Object"]=obj
     }
@@ -255,16 +283,16 @@ class MyVisitor : AbstractParseTreeVisitor<Any>(), MiniJavaParserVisitor<Any> {
         }
 
         //inherit parent content
-        for((fieldName, field) in par.fields){
-            if(fieldName !in obj.fields){
-                obj.fields[fieldName]=field
-            }
-        }
-        for((methodName, method) in par.methods){
-            if(methodName !in obj.methods){
-                obj.methods[methodName]=method
-            }
-        }
+//        for((fieldName, field) in par.fields){
+//            if(fieldName !in obj.fields){
+//                obj.fields[fieldName]=field
+//            }
+//        }
+//        for((methodName, method) in par.methods){
+//            if(methodName !in obj.methods){
+//                obj.methods[methodName]=method
+//            }
+//        }
 
         obj.cached=true
     }
@@ -637,7 +665,7 @@ class MyVisitor : AbstractParseTreeVisitor<Any>(), MiniJavaParserVisitor<Any> {
             throw TypeErrorException("`${obj.type} instanceof $type` is invalid: type not equatable")
         }
 
-        val ans=TypeChecker.instanceof(obj.getRealClass(),type)
+        val ans=TypeChecker.instanceof(type,obj.realType)
         return MiniJavaObject("boolean",ans)
     }
 
@@ -657,7 +685,7 @@ class MyVisitor : AbstractParseTreeVisitor<Any>(), MiniJavaParserVisitor<Any> {
         } else if (ctx.prefix != null) {
             return visitExpPrefix(ctx)
         } else if (ctx.typeType() != null) {
-            TypeChecker.isTypeCastableAndThrow(visitTypeType(ctx.typeType()), visitExpression(ctx.expression(0)).type)
+            TypeChecker.isTypeCastableAndThrow(visitTypeType(ctx.typeType()), visitExpression(ctx.expression(0)).realType)
             return visitExpression(ctx.expression(0)).copy(type = visitTypeType(ctx.typeType()))
         } else if (ctx.NEW() != null) {
             return visitCreator(ctx.creator())
@@ -721,7 +749,7 @@ class MyVisitor : AbstractParseTreeVisitor<Any>(), MiniJavaParserVisitor<Any> {
                 return Mem[name]
             }else{
                 val that:MiniJavaObject=Mem["this"]
-                val clz=classes[that.getRealClass()]!!
+                val clz=classes[that.realType]!!
                 val transformedName=clz.fieldLookupCache[name]!!
                 return that.valueAsMap()[transformedName]!!
             }
@@ -735,7 +763,15 @@ class MyVisitor : AbstractParseTreeVisitor<Any>(), MiniJavaParserVisitor<Any> {
     }
 
     private fun callMethod(name: String, arg: ArrayList<MiniJavaObject>, that: MiniJavaObject?): MiniJavaObject {
-        return callMethod(findMethod(name, arg) as MiniJavaMethod.Method, arg, that)
+        val method=findMethod(name,arg)
+        if(method is MiniJavaMethod.NativeMethod){
+            if(that!=null) {
+                arg.add(that)
+            }
+            return method.func(arg)
+        }else {
+            return callMethod(method as MiniJavaMethod.Method, arg, that)
+        }
     }
 
     private fun callMethod(method:MiniJavaMethod.Method, arg: ArrayList<MiniJavaObject>, that: MiniJavaObject?):MiniJavaObject{
@@ -746,7 +782,7 @@ class MyVisitor : AbstractParseTreeVisitor<Any>(), MiniJavaParserVisitor<Any> {
         }
 
         if(that!=null){
-            Mem.create("this",that.copy(type = that.getRealClass()))
+            Mem.create("this",that.copy(type = that.realType))
             Mem.create("super",that.deSuper(classes))
         }
 
@@ -791,7 +827,7 @@ class MyVisitor : AbstractParseTreeVisitor<Any>(), MiniJavaParserVisitor<Any> {
         val arg=visitArguments(ctx.arguments())
 
         if(that!=null){
-            val clzName=that.getRealClass()
+            val clzName=that.realType
             val clz=classes[clzName]!!
             if(ctx.THIS()!=null){
                 name="$clzName::#new"
@@ -809,6 +845,9 @@ class MyVisitor : AbstractParseTreeVisitor<Any>(), MiniJavaParserVisitor<Any> {
         val method=findMethod(name,arg)
 
         if(method is MiniJavaMethod.NativeMethod){
+            if(that!=null){
+                arg.add(that)
+            }
             return method.func(arg) //TODO pass `this`
         }
 
@@ -841,24 +880,9 @@ class MyVisitor : AbstractParseTreeVisitor<Any>(), MiniJavaParserVisitor<Any> {
             }
 
             val newObject=MiniJavaObject(name, HashMap<String,MiniJavaObject>())
-            newObject.valueAsMap()["Object::#class"] = MiniJavaObject("string",name)
 
             //init new obj with default value
-            Mem.pushStack()
-            Mem.pushLayer()
-            Mem.create("this",newObject)
-            Mem.create("super",newObject.deSuper(classes))
-
-            val clz=classes[name]!!
-            for((fieldName, field) in clz.fields){
-                val newName=clz.fieldLookupCache[fieldName]!!
-                if(field.inits==null) {
-                    newObject.valueAsMap()[newName] = TypeChecker.default(field.type)
-                }else{
-                    newObject.valueAsMap()[newName]=visitVariableInitializer(field.inits, field.type)
-                }
-            }
-            Mem.popStack()
+            initObject(newObject,newObject.realType)
 
             //call constructor
             val method=findMethod("$name::#new",arg)
@@ -869,6 +893,30 @@ class MyVisitor : AbstractParseTreeVisitor<Any>(), MiniJavaParserVisitor<Any> {
         }
     }
 
+    fun initObject(obj: MiniJavaObject, type: String){
+        if(type=="Object"){
+            return
+        }
+
+        Mem.pushStack()
+        Mem.pushLayer()
+        Mem.create("this",obj)
+        Mem.create("super",obj.deSuper(classes))
+
+        val clz=classes[type]!!
+
+        initObject(obj, clz.parent)
+
+        for((fieldName, field) in clz.fields){
+            if(field.inits==null){
+                obj.valueAsMap()["$type::$fieldName"]=TypeChecker.default(field.type).copy(type=field.type)
+            }else{
+                obj.valueAsMap()["$type::$fieldName"]=visitVariableInitializer(field.inits,field.type)
+            }
+        }
+
+        Mem.popStack()
+    }
     /**
      * Waste of time err
      */
@@ -877,7 +925,7 @@ class MyVisitor : AbstractParseTreeVisitor<Any>(), MiniJavaParserVisitor<Any> {
             if(type.endsWith("[]")){
                 return nullObject.copy(type=type)
             }
-            return TypeChecker.default(type)
+            return TypeChecker.default(type).copy(type=type)
         }
 
         val countExp=visitExpression(dimensionArr.last())
