@@ -12,4 +12,10 @@ object FunctionFactory {
             body(args[0])
         }
     }
+
+    fun create0(name: String, returnType: String, body: ()->MiniJavaObject):MiniJavaMethod{
+        return MiniJavaMethod.NativeMethod(name, returnType, arrayListOf()) { _ ->
+            body()
+        }
+    }
 }

@@ -1,21 +1,44 @@
 package cn.edu.nju.cs
 
 object TypeChecker {
+
+    var classes = HashMap<String, MiniJavaClass>()
+
     fun isPrimitiveType(x: String):Boolean{
         return x in arrayOf("int","char","boolean","string")
+    }
+
+    fun instanceof(required: String, found: String):Boolean{
+        if(required==found){
+            return true
+        }
+
+        var now=found
+        while(now!="Object" && now in classes){
+            if(now==required){
+                return true
+            }
+            now=classes[now]!!.parent
+        }
+
+        return now==required
     }
 
     fun check(required: String, found: String): Boolean{
         if(required=="*"){
             return true
         }
-        if(found=="Any"){
+        if(found=="<null>"){
             return !isPrimitiveType(required)
         }
         if(required=="int" && found=="char"){
             return true
         }
-        return required==found
+        if(required==found){
+            return true
+        }
+
+        return instanceof(required, found)
     }
 
     fun checkAndThrow(required: String, found: String){
@@ -34,7 +57,7 @@ object TypeChecker {
         }else if(type=="boolean"){
             return MiniJavaObject("boolean", false)
         }else{
-            return MiniJavaObject("Any", null)
+            return MiniJavaObject("<null>", null)
         }
     }
 
@@ -51,15 +74,21 @@ object TypeChecker {
         if(to=="char" && from=="int"){
             return
         }
-        if(from=="Any"){
+        if(from=="<null>"){
             return
         }
         if(to==from){
             return
         }
+        if(instanceof(to,from)){
+            return
+        }
         throw TypeErrorException("Cannot cast $from to $to")
     }
 
+    /**
+     * Determine if two types can be used in ==. Like a==b
+     */
     fun typeEquatable(a: String, b: String): Boolean {
         return check(a,b) || check(b,a)
     }

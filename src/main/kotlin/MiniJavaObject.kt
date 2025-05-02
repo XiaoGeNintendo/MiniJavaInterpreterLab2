@@ -2,7 +2,12 @@ package cn.edu.nju.cs
 
 class MiniJavaObject(val type: String, var value: Any?, val isIntLiteral:Boolean = false){
 
+    /**
+     * Maybe frequently used if the object is an Object
+     */
+    fun valueAsMap() = value as HashMap<String,MiniJavaObject>
 
+    fun getRealClass() = valueAsMap()["Object::#class"]!!.value.toString()
 
     fun copy(type: String = this.type, value: Any? = this.value, isIntLiteral: Boolean = false):MiniJavaObject{
         return MiniJavaObject(type,value,isIntLiteral)
@@ -32,5 +37,11 @@ class MiniJavaObject(val type: String, var value: Any?, val isIntLiteral:Boolean
 
     override fun hashCode(): Int {
         return javaClass.hashCode()
+    }
+
+    fun deSuper(classes: HashMap<String,MiniJavaClass>):MiniJavaObject{
+        val thatSuper=this.copy(type=classes[this.getRealClass()]!!.parent)
+        thatSuper.valueAsMap()["Object::#class"]=MiniJavaObject("String",thatSuper.type)
+        return thatSuper
     }
 }

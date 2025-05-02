@@ -1,33 +1,27 @@
-int main() {
-    int[][] arr = new int[][] { {1, 2}, {3, 4} };
-    for (int i = 0; i < 2; i++) {
-        for (int j = 0; j < 2; j++) {
-            if(i == 1) {
-                print("skip ");
-                break;
-            } else {
-                print(arr[i][j] + " ");
-            }
-        }
-        println();
-    }
 
-    int i = 0;
-    int j = 0;
-    while (i < 2) {
-        while (j < 2) {
-            if(i == 1) {
-                print("skip ");
-                j++;
-                continue;
-            } else {
-                print(arr[i][j] + " ");
-                j++;
-            }
-        }
-        println();
-        i++;
-        j = 0;
-    }
+// simple inheretance
+// field access
+
+class A {
+    int a;
+}
+
+class B extends A {
+    string b;
+}
+
+int main() {    
+    B x1 = new B();
+    x1.a = 10;
+    x1.b = "hello";
+    println(x1.a);
+    println(x1.b);
+
+    A x2 = new B();
+    x2.a = 20;
+    // x2.b = "world";
+    println(x2.a);
+    // println(x2.b);
+
     return 0;
 }

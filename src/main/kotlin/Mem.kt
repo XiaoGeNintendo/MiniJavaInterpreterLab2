@@ -30,4 +30,8 @@ object Mem {
     fun create(name: String, obj: MiniJavaObject) {
         funStack.last().create(name,obj)
     }
+
+    operator fun contains(name: String): Boolean {
+        return name in funStack.last().vars
+    }
 }

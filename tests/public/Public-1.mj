@@ -1,15 +1,18 @@
+
+
+// simple class fields
+// without inheretance
+
+class A {
+    int a = 10;
+    string b = "hello";
+}
+
 int main() {
-    int[] arr = {1, 2, 3, 4, 5};
-    println(arr);
+    A a = new A();
 
-    for (int i = 0; i < 5; i++) {
-        print(arr[i] + " ");
-    }
-    println();
+    println(a.a);
+    println(a.b);
 
-    int sum = 0;
-    for (int i = 0; i <= 6; i++) {
-        sum += arr[i]; // index out of bounds
-    }
-    return sum;
+    return 0;
 }
