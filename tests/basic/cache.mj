@@ -41,5 +41,23 @@ class CoolGuy extends Human{
 }
 
 int main(){
-return 0;
+    Animal a=new CoolGuy();
+    Human h=(Human) a;
+    CoolGuy c=(CoolGuy) a;
+    a.name="114514";
+    println(a.name+"?");
+    println(h.name+"?");
+    println(c.name+"?");
+    assert(a instanceof Animal);
+    assert(a instanceof Human);
+    assert(a instanceof CoolGuy);
+    assert(c.say()=="Yo-yo!");
+    c.communicate(3);
+    c.communicate();
+
+    h=new Human();
+    println(h.name+"?");
+    assert(h.age==1);
+    assert(h.sex=="M");
+    return 0;
 }

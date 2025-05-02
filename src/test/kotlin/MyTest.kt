@@ -15,7 +15,7 @@ class MyTest {
     }
 
     fun generalLegacy(fn: String){
-        assertTrimmedEquals(File("tests/legacy/$fn.out").readText(),Main.run(File("tests/$fn.mj")))
+        assertTrimmedEquals(File("tests/legacy/$fn.out").readText(),Main.run(File("tests/legacy/$fn.mj")))
     }
 
     fun general(fn: String){
@@ -99,5 +99,29 @@ class MyTest {
     @ValueSource(strings=["HashMap","LinkedList","Stack"])
     fun more_lab3(fn: String){
         general("more/$fn")
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings=["cache"])
+    fun basic_lab3(fn: String){
+        general("basic/$fn")
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings=["1","2","3","4","5"])
+    fun note_lab3(fn: String){
+        general("note/$fn")
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings=["1","2","3","4","5"])
+    fun instanceof_lab3(fn: String){
+        general("instanceof/$fn")
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings=["functional","skill"])
+    fun self_lab3(fn: String){
+        general("self/$fn")
     }
 }

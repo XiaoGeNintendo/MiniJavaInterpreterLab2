@@ -102,7 +102,7 @@ class MyVisitor : AbstractParseTreeVisitor<Any>(), MiniJavaParserVisitor<Any> {
                 return@create1 unitObject
             }
             val clz=classes[a.realType]!!
-            val name=clz.functionLookupCache["to_string"]!!
+            val name=clz.functionLookupCache["to_string()"]!!
             val res=callMethod(name, arrayListOf(), a)
             output(res.value.toString())
             unitObject
@@ -685,6 +685,10 @@ class MyVisitor : AbstractParseTreeVisitor<Any>(), MiniJavaParserVisitor<Any> {
         } else if (ctx.prefix != null) {
             return visitExpPrefix(ctx)
         } else if (ctx.typeType() != null) {
+//            TypeChecker.checkAndThrow(visitTypeType(ctx.typeType()), visitExpression(ctx.expression(0)).type)
+            if(!TypeChecker.typeEquatable(visitTypeType(ctx.typeType()),visitExpression(ctx.expression(0)).type)){
+                throw TypeErrorException("`${ctx.typeType().text} is not equatable to ${visitExpression(ctx.expression(0)).type}` in type convert")
+            }
             TypeChecker.isTypeCastableAndThrow(visitTypeType(ctx.typeType()), visitExpression(ctx.expression(0)).realType)
             return visitExpression(ctx.expression(0)).copy(type = visitTypeType(ctx.typeType()))
         } else if (ctx.NEW() != null) {

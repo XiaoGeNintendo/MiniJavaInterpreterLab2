@@ -20,19 +20,18 @@ object Main {
             x.visit(pt)
         }catch(e: AssertException){
             x.pew(33)
-            System.err.println(e.message)
             e.printStackTrace()
         }catch(e: TypeErrorException){
             x.pew(34)
-            System.err.println(e.message)
             e.printStackTrace()
         }catch(e: IndexOutOfBoundsException){
             x.pew(34)
-            System.err.println(e.message)
             e.printStackTrace()
         }catch(e: NullPointerException){
             x.pew(34)
-            System.err.println(e.message)
+            e.printStackTrace()
+        }catch(e: IllegalStateException){
+            x.pew(34)
             e.printStackTrace()
         }
 

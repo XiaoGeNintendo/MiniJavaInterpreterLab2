@@ -1,0 +1,37 @@
+//Note this is not required by the lab requirement
+class Int{
+    int count = 0;
+
+    Int(){
+        this(0);
+    }
+
+    Int(int no){
+        count=no;
+    }
+    Int set(int i) {
+        count = i;
+        return this;
+    }
+    Int add(int i) {
+        count += i;
+        return this;
+    }
+    Int doubles(){
+        count *= 2;
+        return this;
+    }
+
+    Int print(){
+        println(count);
+        return this;
+    }
+}
+
+int main(){
+    Int a=new Int();
+    Int b=new Int(3);
+    a.print().set(1).print().add(2).print().doubles().print();
+    b.print().set(2).print().add(3).print().doubles().print();
+    return 0;
+}
