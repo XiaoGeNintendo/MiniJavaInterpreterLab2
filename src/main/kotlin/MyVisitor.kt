@@ -96,7 +96,6 @@ class MyVisitor : AbstractParseTreeVisitor<Any>(), MiniJavaParserVisitor<Any> {
         registerMethod(FunctionFactory.create1("print","void","char",{a-> output(a.value!!.c());unitObject}))
         registerMethod(FunctionFactory.create1("print","void","string",{a-> output(a.value!!);unitObject}))
         registerMethod(FunctionFactory.create1("print","void","boolean",{a-> output(a.value!!);unitObject}))
-        registerMethod(FunctionFactory.create1("print","void","<null>",{a-> output("null");unitObject}))
         registerMethod(FunctionFactory.create1("print","void","Object",{a->
             if(a.value==null){
                 output("null")
@@ -214,9 +213,9 @@ class MyVisitor : AbstractParseTreeVisitor<Any>(), MiniJavaParserVisitor<Any> {
             MiniJavaObject("string", arg[0].realType)
         }
 
-        obj.methods["to_string()"]=to_string
-        registerMethod(to_string)
-        obj.functionLookupCache["to_string()"]="Object::to_string"
+//        obj.methods["to_string()"]=to_string
+//        registerMethod(to_string)
+//        obj.functionLookupCache["to_string()"]="Object::to_string"
         //create manual constructor
         val f= FunctionFactory.create0("Object::#new","void") { unitObject }
         obj.constructors["#new()"]=f
@@ -352,6 +351,7 @@ class MyVisitor : AbstractParseTreeVisitor<Any>(), MiniJavaParserVisitor<Any> {
 
         val clz=classes[currentClass]!!
         clz.fields[name]= MiniJavaClass.Field(type,inits)
+        clz.fieldOrder.add(name)
     }
 
     override fun visitConstructorDeclaration(ctx: MiniJavaParser.ConstructorDeclarationContext) {
@@ -483,10 +483,12 @@ class MyVisitor : AbstractParseTreeVisitor<Any>(), MiniJavaParserVisitor<Any> {
         }
 
         val initFields={
-            for((fieldName, field) in clz.fields){
+            for(fieldName in clz.fieldOrder){
+                val field=clz.fields[fieldName]!!
                 val conv=clz.fieldLookupCache[fieldName]!!
                 if(field.inits==null){
-                    that.valueAsMap()[conv]=TypeChecker.default(field.type)
+                    //do nth
+//                    that.valueAsMap()[conv]=TypeChecker.default(field.type)
                 }else{
                     that.valueAsMap()[conv]=visitVariableInitializer(field.inits,field.type)
                 }
@@ -568,7 +570,7 @@ class MyVisitor : AbstractParseTreeVisitor<Any>(), MiniJavaParserVisitor<Any> {
         } else {
             //it's a var statement
             val exp = visitExpression(ctx.expression())
-            if(exp==nullObject){
+            if(exp.type=="<null>"){
                 throw TypeErrorException("No null in var plz.")
             }
 
@@ -804,7 +806,7 @@ class MyVisitor : AbstractParseTreeVisitor<Any>(), MiniJavaParserVisitor<Any> {
 
     private fun visitDot(ctx: MiniJavaParser.ExpressionContext): MiniJavaObject {
         val obj=visitExpression(ctx.expression(0))
-        if(obj==nullObject){ //FIXME might be dangerous
+        if(obj.value==null){
             throw NullPointerException("$obj is null")
         }
 
@@ -832,7 +834,7 @@ class MyVisitor : AbstractParseTreeVisitor<Any>(), MiniJavaParserVisitor<Any> {
                 return Mem[name]
             }else{
                 val that:MiniJavaObject=Mem["this"]
-                val clz=classes[that.realType]!!
+                val clz=classes[that.type]!!
                 val transformedName=clz.fieldLookupCache[name]!!
                 return that.valueAsMap()[transformedName]!!
             }
@@ -856,6 +858,30 @@ class MyVisitor : AbstractParseTreeVisitor<Any>(), MiniJavaParserVisitor<Any> {
                 Mem.pushStack()
                 visitBlockAsConstructor(null, that!!)
                 Mem.popStack()
+            }
+
+            //FUCK!!!!!
+            if(name=="print" && arg.isNotEmpty() && TypeChecker.instanceof("Object",arg[0].type)){
+                val clz=classes[arg[0].type]!!
+                if("to_string()" !in clz.functionLookupCache){
+                    if(arg[0].value==null){
+                        output("null")
+                    }else {
+                        output(arg[0].realType)
+                    }
+                    return unitObject
+                }
+            }
+            if(name=="println" && arg.isNotEmpty() && TypeChecker.instanceof("Object",arg[0].type)){
+                val clz=classes[arg[0].type]!!
+                if("to_string()" !in clz.functionLookupCache){
+                    if(arg[0].value==null){
+                        outputLn("null")
+                    }else{
+                        outputLn(arg[0].realType)
+                    }
+                    return unitObject
+                }
             }
             return method.func(arg)
         }else {
@@ -966,7 +992,7 @@ class MyVisitor : AbstractParseTreeVisitor<Any>(), MiniJavaParserVisitor<Any> {
             val newObject=MiniJavaObject(name, HashMap<String,MiniJavaObject>())
 
             //init new obj with default value
-//            initObject(newObject,newObject.realType)
+            initObject(newObject,newObject.realType)
 
             //call constructor
             val method=findMethod("$name::#new",arg)
@@ -981,29 +1007,21 @@ class MyVisitor : AbstractParseTreeVisitor<Any>(), MiniJavaParserVisitor<Any> {
         }
     }
 
+    /**
+     * Set every field in an object to `TypeChecker.default`
+     */
     fun initObject(obj: MiniJavaObject, type: String){
         if(type=="Object"){
             return
         }
-
-        Mem.pushStack()
-        Mem.pushLayer()
-        Mem.create("this",obj)
-        Mem.create("super",obj.deSuper(classes))
-
         val clz=classes[type]!!
 
         initObject(obj, clz.parent)
 
         for((fieldName, field) in clz.fields){
-            if(field.inits==null){
-                obj.valueAsMap()["$type::$fieldName"]=TypeChecker.default(field.type)
-            }else{
-                obj.valueAsMap()["$type::$fieldName"]=visitVariableInitializer(field.inits,field.type)
-            }
+            obj.valueAsMap()["$type::$fieldName"]=TypeChecker.default(field.type)
         }
 
-        Mem.popStack()
     }
     /**
      * Waste of time err

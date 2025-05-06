@@ -8,6 +8,7 @@ class MiniJavaClass(val name: String, val parent: String) {
     val fields=HashMap<String, Field>()
     val methods=HashMap<String, MiniJavaMethod>()
     val constructors=HashMap<String,MiniJavaMethod>()
+    val fieldOrder=ArrayList<String>()
 
     var fieldLookupCache=HashMap<String,String>()
     var functionLookupCache=HashMap<String,String>()

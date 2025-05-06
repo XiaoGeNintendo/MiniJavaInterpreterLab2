@@ -1,5 +1,6 @@
 class A{
 }
+class D extends A{}
 class B extends A{
     string x;
     B(string x){
@@ -32,6 +33,8 @@ int main(){
     a=new B("?");
     println(a);
     a=new C("??");
+    println(a);
+    a=new D();
     println(a);
     return 0;
 }

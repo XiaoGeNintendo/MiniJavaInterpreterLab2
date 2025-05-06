@@ -120,7 +120,7 @@ class MyTest {
     }
 
     @ParameterizedTest
-    @ValueSource(strings=["functional","skill","super","tostr"])
+    @ValueSource(strings=["functional","skill","super","tostr","trie"])
     fun self_lab3(fn: String){
         general("self/$fn")
     }
@@ -135,8 +135,14 @@ class MyTest {
 
 
     @ParameterizedTest
-    @ValueSource(strings=["1","2","3","4"])
+    @ValueSource(strings=["1","2","3","4","5","6","7","8","9","10"])
     fun constructor_lab3(fn: String){
         general("constructor/$fn")
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings=["1","2","3"])
+    fun eq_lab3(fn: String){
+        general("eq/$fn")
     }
 }
