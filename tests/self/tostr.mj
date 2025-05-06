@@ -1,0 +1,37 @@
+class A{
+}
+class B extends A{
+    string x;
+    B(string x){
+        this.x=x;
+    }
+    string to_string(){
+        return "114514"+x;
+    }
+}
+class C extends B{
+    C(string x){
+        super(x);
+    }
+}
+int main(){
+    println(new A());
+    println(new B("!"));
+    println(new C("!!"));
+    println((A)null);
+    println((B)null);
+    println((C)null);
+    A a=null;
+    B b=null;
+    C c=null;
+    println(a);
+    println(b);
+    println(c);
+    a=new A();
+    println(a);
+    a=new B("?");
+    println(a);
+    a=new C("??");
+    println(a);
+    return 0;
+}

@@ -1,5 +1,6 @@
 package cn.edu.nju.cs
 
+import cn.edu.nju.cs.MiniJavaParser.BlockContext
 import cn.edu.nju.cs.MiniJavaParser.ExpressionContext
 import cn.edu.nju.cs.MiniJavaParser.StatementContext
 import org.antlr.v4.runtime.tree.AbstractParseTreeVisitor
@@ -205,7 +206,7 @@ class MyVisitor : AbstractParseTreeVisitor<Any>(), MiniJavaParserVisitor<Any> {
     }
 
     private fun addObjectClass(){
-        val obj=MiniJavaClass("Object","YOU SHOULD NEVER REACH HERE!!!")
+        val obj=MiniJavaClass("Object","OBJECT'S PARENT? YOU SHOULD NEVER REACH HERE!!!")
         obj.cached=true
 
         val to_string=MiniJavaMethod.NativeMethod("Object::to_string","string", arrayListOf()){
@@ -216,6 +217,10 @@ class MyVisitor : AbstractParseTreeVisitor<Any>(), MiniJavaParserVisitor<Any> {
         obj.methods["to_string()"]=to_string
         registerMethod(to_string)
         obj.functionLookupCache["to_string()"]="Object::to_string"
+        //create manual constructor
+        val f= FunctionFactory.create0("Object::#new","void") { unitObject }
+        obj.constructors["#new()"]=f
+        registerMethod(f)
 
         classes["Object"]=obj
     }
@@ -235,19 +240,19 @@ class MyVisitor : AbstractParseTreeVisitor<Any>(), MiniJavaParserVisitor<Any> {
         TypeChecker.classes=classes
 
         //TODO delete me when uploading
-        for((name, clz) in classes){
-            println("Class $name:")
-            println("Fields:"+clz.fields)
-            println("Methods:"+clz.methods)
-            println("Constructors:"+clz.constructors)
-            println("FieldCache:"+clz.fieldLookupCache)
-            println("FunctionCache:"+clz.functionLookupCache)
-        }
-
-        for((name, f) in methods){
-            println("Methods with $name:")
-            println(f.joinToString { it.getSignature() })
-        }
+//        for((name, clz) in classes){
+//            println("Class $name:")
+//            println("Fields:"+clz.fields)
+//            println("Methods:"+clz.methods)
+//            println("Constructors:"+clz.constructors)
+//            println("FieldCache:"+clz.fieldLookupCache)
+//            println("FunctionCache:"+clz.functionLookupCache)
+//        }
+//
+//        for((name, f) in methods){
+//            println("Methods with $name:")
+//            println(f.joinToString { it.getSignature() })
+//        }
 
         pew(callMethod("main", arrayListOf(),null).value!!.i())
     }
@@ -313,7 +318,7 @@ class MyVisitor : AbstractParseTreeVisitor<Any>(), MiniJavaParserVisitor<Any> {
         if(classObj.constructors.isEmpty()){
             //create manual constructor
             val f= FunctionFactory.create0("$name::#new","void") { unitObject }
-            classObj.constructors["$name::#new"]=f
+            classObj.constructors["#new()"]=f
             registerMethod(f)
         }
 
@@ -459,6 +464,80 @@ class MyVisitor : AbstractParseTreeVisitor<Any>(), MiniJavaParserVisitor<Any> {
         }
     }
 
+    /**
+     * Visit a block in the rule of constructor
+     *
+     * If ctx is `null`, will call super() + init fields
+     */
+    fun visitBlockAsConstructor(ctx: BlockContext?, that: MiniJavaObject){
+        Mem.pushLayer()
+        Mem.create("this",that)
+        Mem.create("super",that.deSuper(classes))
+
+        val clz=classes[that.realType]!!
+
+        val callSuper={
+            if(that.realType!="Object") {
+                callMethod("${clz.parent}::#new", arrayListOf(), that.deSuper(classes))
+            }
+        }
+
+        val initFields={
+            for((fieldName, field) in clz.fields){
+                val conv=clz.fieldLookupCache[fieldName]!!
+                if(field.inits==null){
+                    that.valueAsMap()[conv]=TypeChecker.default(field.type)
+                }else{
+                    that.valueAsMap()[conv]=visitVariableInitializer(field.inits,field.type)
+                }
+            }
+        }
+
+        if(ctx==null || ctx.blockStatement().isEmpty()){
+            //call super()
+            callSuper()
+            //initialize fields
+            initFields()
+
+            Mem.popLayer()
+            return
+        }
+
+        val first=ctx.blockStatement(0).statement()?.expression()?.methodCall()
+
+        if(first?.SUPER()==null && first?.THIS()==null){
+            //user did not call super explicitly
+
+            //call super()
+            callSuper()
+            //initialize fields
+            initFields()
+
+            //run all statements
+            for(i in ctx.blockStatement()){
+                visitBlockStatement(i)
+            }
+        }else if(first.SUPER() !=null){
+            //user called super
+            visitBlockStatement(ctx.blockStatement(0))
+
+            //init fields
+            initFields()
+
+            //run remaining statement
+            for(i in ctx.blockStatement().drop(1)){
+                visitBlockStatement(i)
+            }
+        }else if(first.THIS()!=null){
+            //user delegated to another constructor no need to do anything
+            for(i in ctx.blockStatement()){
+                visitBlockStatement(i)
+            }
+        }
+
+        Mem.popLayer()
+    }
+
     override fun visitBlock(ctx: MiniJavaParser.BlockContext) {
         Mem.pushLayer()
         for (x in ctx.blockStatement()) {
@@ -483,7 +562,7 @@ class MyVisitor : AbstractParseTreeVisitor<Any>(), MiniJavaParserVisitor<Any> {
             val value = if (ctx.variableDeclarator().variableInitializer() != null)
                 visitVariableInitializer(ctx.variableDeclarator().variableInitializer(),type)
             else
-                TypeChecker.default(type).copy(type=type)
+                TypeChecker.default(type)
 
             Mem.create(name,value)
         } else {
@@ -730,7 +809,7 @@ class MyVisitor : AbstractParseTreeVisitor<Any>(), MiniJavaParserVisitor<Any> {
         }
 
         if(ctx.identifier()!=null){
-            val clz=classes[obj.type]!!
+            val clz=classes[obj.type] ?: error("No such type: ${obj.type}")
             val name=visitIdentifier(ctx.identifier())
             val convertedName= clz.fieldLookupCache[name] ?: error("No such field $name in declare class ${obj.type}")
 
@@ -772,6 +851,12 @@ class MyVisitor : AbstractParseTreeVisitor<Any>(), MiniJavaParserVisitor<Any> {
             if(that!=null) {
                 arg.add(that)
             }
+            if(name.endsWith("::#new")){
+                //constructor
+                Mem.pushStack()
+                visitBlockAsConstructor(null, that!!)
+                Mem.popStack()
+            }
             return method.func(arg)
         }else {
             return callMethod(method as MiniJavaMethod.Method, arg, that)
@@ -791,7 +876,12 @@ class MyVisitor : AbstractParseTreeVisitor<Any>(), MiniJavaParserVisitor<Any> {
         }
 
         try{
-            visitBlock(method.body)
+            val isConstructorCall=method.name.endsWith("::#new")
+            if(isConstructorCall){
+                visitBlockAsConstructor(method.body,that!!)
+            }else{
+                visitBlock(method.body)
+            }
         }catch(e: ReturnException){
             if(e.value==null){
                 if(method.returnType!="void"){
@@ -832,7 +922,7 @@ class MyVisitor : AbstractParseTreeVisitor<Any>(), MiniJavaParserVisitor<Any> {
 
         if(that!=null){
             val clzName=that.realType
-            val clz=classes[clzName]!!
+            val clz=classes[clzName] ?: error("No such class: $clzName")
             if(ctx.THIS()!=null){
                 name="$clzName::#new"
             }else if(ctx.SUPER()!=null){
@@ -846,17 +936,7 @@ class MyVisitor : AbstractParseTreeVisitor<Any>(), MiniJavaParserVisitor<Any> {
             }
         }
 
-        val method=findMethod(name,arg)
-
-        if(method is MiniJavaMethod.NativeMethod){
-            if(that!=null){
-                arg.add(that)
-            }
-            return method.func(arg) //TODO pass `this`
-        }
-
-        //it's a normal function
-        return callMethod(method as MiniJavaMethod.Method ,arg, that)
+        return callMethod(name,arg, if(ctx.SUPER()!=null) that?.deSuper(classes) else that)
     }
 
     override fun visitCreator(ctx: MiniJavaParser.CreatorContext): MiniJavaObject {
@@ -886,12 +966,16 @@ class MyVisitor : AbstractParseTreeVisitor<Any>(), MiniJavaParserVisitor<Any> {
             val newObject=MiniJavaObject(name, HashMap<String,MiniJavaObject>())
 
             //init new obj with default value
-            initObject(newObject,newObject.realType)
+//            initObject(newObject,newObject.realType)
 
             //call constructor
             val method=findMethod("$name::#new",arg)
             if(method is MiniJavaMethod.Method) {
                 callMethod(method, arg, newObject)
+            }else{
+                Mem.pushStack()
+                visitBlockAsConstructor(null,newObject)
+                Mem.popStack()
             }
             return newObject
         }
@@ -913,7 +997,7 @@ class MyVisitor : AbstractParseTreeVisitor<Any>(), MiniJavaParserVisitor<Any> {
 
         for((fieldName, field) in clz.fields){
             if(field.inits==null){
-                obj.valueAsMap()["$type::$fieldName"]=TypeChecker.default(field.type).copy(type=field.type)
+                obj.valueAsMap()["$type::$fieldName"]=TypeChecker.default(field.type)
             }else{
                 obj.valueAsMap()["$type::$fieldName"]=visitVariableInitializer(field.inits,field.type)
             }
@@ -929,7 +1013,7 @@ class MyVisitor : AbstractParseTreeVisitor<Any>(), MiniJavaParserVisitor<Any> {
             if(type.endsWith("[]")){
                 return nullObject.copy(type=type)
             }
-            return TypeChecker.default(type).copy(type=type)
+            return TypeChecker.default(type)
         }
 
         val countExp=visitExpression(dimensionArr.last())

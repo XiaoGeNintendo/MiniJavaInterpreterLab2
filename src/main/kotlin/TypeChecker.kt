@@ -57,7 +57,7 @@ object TypeChecker {
         }else if(type=="boolean"){
             return MiniJavaObject("boolean", false)
         }else{
-            return MiniJavaObject("<null>", null)
+            return MiniJavaObject(type, null,"<null>")
         }
     }
 

@@ -17,7 +17,7 @@ class FunctionStack {
     }
 
     operator fun get(name: String):MiniJavaObject{
-        return vars[name]!!.last()
+        return (vars[name] ?: error("No such variable: $name")).last()
     }
 
     fun create(name: String, value: MiniJavaObject){

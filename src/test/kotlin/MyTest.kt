@@ -114,14 +114,29 @@ class MyTest {
     }
 
     @ParameterizedTest
-    @ValueSource(strings=["1","2","3","4","5"])
+    @ValueSource(strings=["1","2","3","4","5","6"])
     fun instanceof_lab3(fn: String){
         general("instanceof/$fn")
     }
 
     @ParameterizedTest
-    @ValueSource(strings=["functional","skill"])
+    @ValueSource(strings=["functional","skill","super","tostr"])
     fun self_lab3(fn: String){
         general("self/$fn")
+    }
+
+
+    @ParameterizedTest
+    @ValueSource(strings=["1","2","3"])
+    fun typecast_lab3(fn: String){
+        general("typecast/$fn")
+    }
+
+
+
+    @ParameterizedTest
+    @ValueSource(strings=["1","2","3","4"])
+    fun constructor_lab3(fn: String){
+        general("constructor/$fn")
     }
 }
