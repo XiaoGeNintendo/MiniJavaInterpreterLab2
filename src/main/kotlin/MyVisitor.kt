@@ -10,6 +10,7 @@ class MyVisitor : AbstractParseTreeVisitor<Any>(), MiniJavaParserVisitor<Any> {
 
     val unitObject = MiniJavaObject("?",Unit)
     val nullObject = MiniJavaObject("<null>",null)
+    val superObject = MiniJavaObject("I PROMISE TO PAY THE BEARAR ON DEMAND THE POWER OF SUPER",null)
 
     private fun debug(x: Any) {
         System.err.println(x)
@@ -472,13 +473,13 @@ class MyVisitor : AbstractParseTreeVisitor<Any>(), MiniJavaParserVisitor<Any> {
     fun visitBlockAsConstructor(ctx: BlockContext?, that: MiniJavaObject){
         Mem.pushLayer()
         Mem.create("this",that)
-        Mem.create("super",that.deSuper(classes))
+//        Mem.create("super",that.deSuper(classes))
 
-        val clz=classes[that.realType]!!
+        val clz=classes[that.type]!!
 
         val callSuper={
-            if(that.realType!="Object") {
-                callMethod("${clz.parent}::#new", arrayListOf(), that.deSuper(classes))
+            if(that.type!="Object") {
+                callMethod("${clz.parent}::#new", arrayListOf(), that)
             }
         }
 
@@ -805,20 +806,26 @@ class MyVisitor : AbstractParseTreeVisitor<Any>(), MiniJavaParserVisitor<Any> {
     }
 
     private fun visitDot(ctx: MiniJavaParser.ExpressionContext): MiniJavaObject {
-        val obj=visitExpression(ctx.expression(0))
+        var obj=visitExpression(ctx.expression(0))
+        val isSuper=obj==superObject
+        if(isSuper){
+            obj=Mem["this"].toSuper(classes)
+        }
+
         if(obj.value==null){
             throw NullPointerException("$obj is null")
         }
 
         if(ctx.identifier()!=null){
             val clz=classes[obj.type] ?: error("No such type: ${obj.type}")
+
             val name=visitIdentifier(ctx.identifier())
-            val convertedName= clz.fieldLookupCache[name] ?: error("No such field $name in declare class ${obj.type}")
+            val convertedName=clz.fieldLookupCache[name] ?: error("No such field $name in declared class ${obj.type}")
 
             return obj.valueAsMap()[convertedName]!!
         }else{
             //it's a method call
-            return visitMethodCall(ctx.methodCall(),obj)
+            return visitMethodCall(ctx.methodCall(),obj,isSuper)
         }
     }
 
@@ -841,7 +848,7 @@ class MyVisitor : AbstractParseTreeVisitor<Any>(), MiniJavaParserVisitor<Any> {
         }else if(ctx.THIS()!=null){
             return Mem["this"]
         }else if(ctx.SUPER()!=null){
-            return Mem["super"]
+            return superObject
         }else{
             error("Should not reach here")
         }
@@ -856,7 +863,7 @@ class MyVisitor : AbstractParseTreeVisitor<Any>(), MiniJavaParserVisitor<Any> {
             if(name.endsWith("::#new")){
                 //constructor
                 Mem.pushStack()
-                visitBlockAsConstructor(null, that!!)
+                visitBlockAsConstructor(null, that!!.copy(type=name.getType()!!))
                 Mem.popStack()
             }
 
@@ -885,7 +892,7 @@ class MyVisitor : AbstractParseTreeVisitor<Any>(), MiniJavaParserVisitor<Any> {
             }
             return method.func(arg)
         }else {
-            return callMethod(method as MiniJavaMethod.Method, arg, that)
+            return callMethod(method as MiniJavaMethod.Method, arg, that?.copy(type=method.name.getType()!!))
         }
     }
 
@@ -897,8 +904,8 @@ class MyVisitor : AbstractParseTreeVisitor<Any>(), MiniJavaParserVisitor<Any> {
         }
 
         if(that!=null){
-            Mem.create("this",that.copy(type = that.realType))
-            Mem.create("super",that.deSuper(classes))
+            Mem.create("this",that)
+//            Mem.create("super",that.deSuper(classes))
         }
 
         try{
@@ -935,7 +942,7 @@ class MyVisitor : AbstractParseTreeVisitor<Any>(), MiniJavaParserVisitor<Any> {
         return visitMethodCall(ctx,null)
     }
 
-    fun visitMethodCall(ctx: MiniJavaParser.MethodCallContext, that: MiniJavaObject?): MiniJavaObject {
+    fun visitMethodCall(ctx: MiniJavaParser.MethodCallContext, that: MiniJavaObject?, isSuper:Boolean=false): MiniJavaObject {
         var name=if(ctx.THIS()!=null){
             "#new"
         }else if(ctx.SUPER()!=null){
@@ -947,12 +954,12 @@ class MyVisitor : AbstractParseTreeVisitor<Any>(), MiniJavaParserVisitor<Any> {
         val arg=visitArguments(ctx.arguments())
 
         if(that!=null){
-            val clzName=that.realType
+            val clzName=if(isSuper) classes[that.realType]!!.parent else that.realType
             val clz=classes[clzName] ?: error("No such class: $clzName")
             if(ctx.THIS()!=null){
-                name="$clzName::#new"
+                name="${that.type}::#new"
             }else if(ctx.SUPER()!=null){
-                name="${clz.parent}::#new"
+                name="${classes[that.type]!!.parent}::#new"
             }else {
                 val toLookup="$name(${arg.joinToString { it.type }})"
 
@@ -962,7 +969,7 @@ class MyVisitor : AbstractParseTreeVisitor<Any>(), MiniJavaParserVisitor<Any> {
             }
         }
 
-        return callMethod(name,arg, if(ctx.SUPER()!=null) that?.deSuper(classes) else that)
+        return callMethod(name,arg, that)
     }
 
     override fun visitCreator(ctx: MiniJavaParser.CreatorContext): MiniJavaObject {
@@ -995,14 +1002,7 @@ class MyVisitor : AbstractParseTreeVisitor<Any>(), MiniJavaParserVisitor<Any> {
             initObject(newObject,newObject.realType)
 
             //call constructor
-            val method=findMethod("$name::#new",arg)
-            if(method is MiniJavaMethod.Method) {
-                callMethod(method, arg, newObject)
-            }else{
-                Mem.pushStack()
-                visitBlockAsConstructor(null,newObject)
-                Mem.popStack()
-            }
+            callMethod("$name::#new",arg,newObject)
             return newObject
         }
     }
@@ -1077,6 +1077,4 @@ class MyVisitor : AbstractParseTreeVisitor<Any>(), MiniJavaParserVisitor<Any> {
             return arrayListOf()
         }
     }
-
-
 }

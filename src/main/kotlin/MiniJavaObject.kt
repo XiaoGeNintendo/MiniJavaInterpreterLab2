@@ -37,9 +37,22 @@ class MiniJavaObject(val type: String, var value: Any?, var realType: String = t
         return javaClass.hashCode()
     }
 
+    /**
+     * Returns this object but with real type and type set to the parent class
+     */
+    @Deprecated("Not work as intended. Use toSuper instead")
     fun deSuper(classes: HashMap<String,MiniJavaClass>):MiniJavaObject{
         val p=classes[this.realType]!!.parent
         val thatSuper=this.copy(type=p,realType=p)
+        return thatSuper
+    }
+
+    /**
+     * Returns this object but with type set to the parent class
+     */
+    fun toSuper(classes: HashMap<String,MiniJavaClass>):MiniJavaObject{
+        val p=classes[this.realType]!!.parent
+        val thatSuper=this.copy(type=p)
         return thatSuper
     }
 }

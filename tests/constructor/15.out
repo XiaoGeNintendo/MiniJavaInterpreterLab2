@@ -1,0 +1,9 @@
+--- Creating Sub object ---
+Super: Constructor Start
+Sub: baseField = Initialized base, subField = 
+Super: Constructor End
+Sub: Constructor Start
+Sub: baseField = Initialized base, subField = Initialized sub
+Sub: Constructor End
+--- Sub object created ---
+Process exits with the code 0.
