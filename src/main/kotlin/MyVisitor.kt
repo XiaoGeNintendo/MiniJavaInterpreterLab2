@@ -614,7 +614,10 @@ class MyVisitor : AbstractParseTreeVisitor<Any>(), MiniJavaParserVisitor<Any> {
     private fun visitFor(ctx: StatementContext) {
         Mem.pushLayer()
 
-        visitForInit(ctx.forControl().forInit())
+        if(ctx.forControl().forInit()!=null) {
+            visitForInit(ctx.forControl().forInit())
+        }
+
         while (true) {
             if(ctx.forControl().expression()!=null) {
                 val cond = visitExpression(ctx.forControl().expression()).value as Boolean

@@ -65,7 +65,7 @@ class MyTest {
 
 
     @ParameterizedTest
-    @ValueSource(strings = ["1","2","3"])
+    @ValueSource(strings = ["1","2","3","4"])
     fun self(fn: String){
         generalLegacy("self/$fn")
     }
