@@ -28,7 +28,7 @@ class SubWithMethodOverride extends SuperWithMethod {
     void printState() {
         // When called from the *superclass* constructor, subField's state
         // depends on *when* it's initialized in the subclass.
-        println("Sub: baseField = " + baseField + ", subField = " + subField);
+        println("Sub: baseField = " + baseField + ", subField = " + subField+".");
     }
 }
 

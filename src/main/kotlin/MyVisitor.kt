@@ -954,7 +954,7 @@ class MyVisitor : AbstractParseTreeVisitor<Any>(), MiniJavaParserVisitor<Any> {
         val arg=visitArguments(ctx.arguments())
 
         if(that!=null){
-            val clzName=if(isSuper) classes[that.realType]!!.parent else that.realType
+            val clzName=if(isSuper) that.type else that.realType
             val clz=classes[clzName] ?: error("No such class: $clzName")
             if(ctx.THIS()!=null){
                 name="${that.type}::#new"

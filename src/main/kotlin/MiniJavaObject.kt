@@ -48,10 +48,10 @@ class MiniJavaObject(val type: String, var value: Any?, var realType: String = t
     }
 
     /**
-     * Returns this object but with type set to the parent class
+     * Returns this object but with decltype set to the parent class of current decltype
      */
     fun toSuper(classes: HashMap<String,MiniJavaClass>):MiniJavaObject{
-        val p=classes[this.realType]!!.parent
+        val p=classes[this.type]!!.parent
         val thatSuper=this.copy(type=p)
         return thatSuper
     }
