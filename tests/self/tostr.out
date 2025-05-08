@@ -12,4 +12,14 @@ B
 C
 D
 114514??
+null
+X
+Y
+Y!
+Y!
+[1, 2, 3]
+[true, false, true]
+[A, B, C, D]
+[a, b, c, d]
+[null, [1, 2, 3]]
 Process exits with the code 0.

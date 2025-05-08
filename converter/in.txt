@@ -1,0 +1,191 @@
+// File: Employee.java
+public abstract class Employee {
+    private String name;
+    private String employeeId;
+
+    // Constructor
+    public Employee(String name, String employeeId) {
+        this.name = name;
+        this.employeeId = employeeId;
+        System.out.println("Employee constructor called for: " + name); // For tracking
+    }
+
+    // Abstract method for calculating salary
+    public abstract double calculateSalary();
+
+    // Getters
+    public String getName() {
+        return name;
+    }
+
+    public String getEmployeeId() {
+        return employeeId;
+    }
+
+    // Overridden toString() method
+    @Override
+    public String toString() {
+        return "Employee [ID: " + employeeId + ", Name: " + name + "]";
+    }
+}
+
+// File: SalariedEmployee.java
+public class SalariedEmployee extends Employee {
+    private double annualSalary;
+
+    // Constructor
+    public SalariedEmployee(String name, String employeeId, double annualSalary) {
+        // Call to the superclass constructor
+        super(name, employeeId);
+        this.annualSalary = annualSalary;
+        System.out.println("SalariedEmployee constructor called for: " + name); // For tracking
+    }
+
+    // Implementing abstract method
+    @Override
+    public double calculateSalary() {
+        // Calculate monthly salary
+        return annualSalary / 12;
+    }
+
+    // Overridden toString()
+    @Override
+    public String toString() {
+        // Call superclass toString() and add specific info
+        return super.toString() + ", Type: Salaried, Annual Salary: " + annualSalary;
+    }
+
+    // Getter specific to SalariedEmployee
+    public double getAnnualSalary() {
+        return annualSalary;
+    }
+}
+
+// File: HourlyEmployee.java
+public class HourlyEmployee extends Employee {
+    private double hourlyRate;
+    private int hoursWorked;
+
+    // Constructor with all details
+    public HourlyEmployee(String name, String employeeId, double hourlyRate, int hoursWorked) {
+        // Call to the superclass constructor
+        super(name, employeeId);
+        this.hourlyRate = hourlyRate;
+        this.hoursWorked = hoursWorked;
+        System.out.println("HourlyEmployee detailed constructor called for: " + name); // For tracking
+    }
+
+    // Constructor using this() for chaining - defaults hoursWorked to 0
+    public HourlyEmployee(String name, String employeeId, double hourlyRate) {
+        // Call to another constructor in the same class
+        this(name, employeeId, hourlyRate, 0);
+        System.out.println("HourlyEmployee simple constructor called for: " + name + ", defaulting hours."); // For tracking
+    }
+
+    // Implementing abstract method
+    @Override
+    public double calculateSalary() {
+        // Calculate weekly salary (assuming this represents a week)
+        return hourlyRate * hoursWorked;
+    }
+
+    // Overridden toString()
+    @Override
+    public String toString() {
+         // Call superclass toString() and add specific info
+        return super.toString() + ", Type: Hourly, Rate: " + hourlyRate + ", Hours: " + hoursWorked;
+    }
+
+    // Getters specific to HourlyEmployee
+    public double getHourlyRate() {
+        return hourlyRate;
+    }
+
+    public int getHoursWorked() {
+        return hoursWorked;
+    }
+}
+
+// File: Manager.java
+// Manager inherits from SalariedEmployee (deeper hierarchy)
+public class Manager extends SalariedEmployee {
+    private double monthlyBonus;
+
+    // Constructor
+    public Manager(String name, String employeeId, double annualSalary, double monthlyBonus) {
+        // Call to the superclass (SalariedEmployee) constructor
+        super(name, employeeId, annualSalary);
+        this.monthlyBonus = monthlyBonus;
+        System.out.println("Manager constructor called for: " + name); // For tracking
+    }
+
+    // Overriding calculateSalary() to add bonus
+    @Override
+    public double calculateSalary() {
+        // Call the superclass's calculateSalary() (SalariedEmployee's implementation)
+        double baseMonthlySalary = super.calculateSalary();
+        return baseMonthlySalary + monthlyBonus;
+    }
+
+    // Overridden toString()
+    @Override
+    public String toString() {
+        // Call superclass toString() and add specific info
+        return super.toString() + ", Type: Manager, Monthly Bonus: " + monthlyBonus;
+    }
+
+    // Getter specific to Manager
+    public double getMonthlyBonus() {
+        return monthlyBonus;
+    }
+}
+
+
+// File: PayrollSystem.java
+public class PayrollSystem {
+
+    // Method processing employees polymorphically
+    public double processPayroll(Employee[] employees) {
+        double totalPayroll = 0;
+        System.out.println("\n--- Processing Payroll ---");
+
+        for (Employee emp : employees) {
+            // Demonstrate calling overridden toString()
+            System.out.println(emp.toString());
+
+            // Demonstrate polymorphic method call
+            double salary = emp.calculateSalary();
+            System.out.println("Calculated Pay: " + salary);
+            totalPayroll += salary;
+            System.out.println("--------------------------");
+        }
+        return totalPayroll;
+    }
+}
+
+// File: Main.java
+public class Main {
+
+    public static void main(String[] args) {
+        System.out.println("--- Creating Employees ---");
+
+        // Creating instances of different employee types
+        SalariedEmployee emp1 = new SalariedEmployee("Alice", "S001", 60000.0);
+        HourlyEmployee emp2 = new HourlyEmployee("Bob", "H002", 15.0, 40); // Using detailed constructor
+        Manager mgr1 = new Manager("Charlie", "M003", 80000.0, 500.0);
+        HourlyEmployee emp3 = new HourlyEmployee("David", "H004", 18.0); // Using constructor with this()
+
+        System.out.println("\n--- Employee Creation Complete ---");
+
+        // Creating an array of Employee references
+        Employee[] companyEmployees = {emp1, emp2, mgr1, emp3};
+
+        // Creating a PayrollSystem instance
+        PayrollSystem payroll = new PayrollSystem();
+
+        // Process the payroll using the system
+        double totalCost = payroll.processPayroll(companyEmployees);
+
+        System.out.println("\nTotal Payroll Cost: " + totalCost);
+    }
+}

@@ -12,9 +12,6 @@ class MyVisitor : AbstractParseTreeVisitor<Any>(), MiniJavaParserVisitor<Any> {
     val nullObject = MiniJavaObject("<null>",null)
     val superObject = MiniJavaObject("I PROMISE TO PAY THE BEARAR ON DEMAND THE POWER OF SUPER",null)
 
-    private fun debug(x: Any) {
-        System.err.println(x)
-    }
 
     fun pew(x: Int){
         outputLn("Process exits with the code $x.")
@@ -189,12 +186,9 @@ class MyVisitor : AbstractParseTreeVisitor<Any>(), MiniJavaParserVisitor<Any> {
     }
 
     private fun callMethodInline(name: String, vararg param: MiniJavaObject):MiniJavaObject{
-        val method=findMethod(name,param.asList())
-        if(method is MiniJavaMethod.NativeMethod){
-            return method.func(param.toCollection(ArrayList()))
-        }else{
-            TODO("Not supported")
-        }
+        val method=findMethod(name,param.asList()) as MiniJavaMethod.NativeMethod
+
+        return method.func(param.toCollection(ArrayList()))
     }
 
     private fun registerMethod(method: MiniJavaMethod) {
@@ -735,7 +729,7 @@ class MyVisitor : AbstractParseTreeVisitor<Any>(), MiniJavaParserVisitor<Any> {
             TypeChecker.checkAndThrow("boolean", obj.type)
             return obj.copy(value = !(obj.value as Boolean))
         } else {
-            throw IllegalStateException("Unknown prefix operator ${ctx.prefix.text}")
+            error("Unknown prefix operator ${ctx.prefix.text}")
         }
     }
 
@@ -958,7 +952,8 @@ class MyVisitor : AbstractParseTreeVisitor<Any>(), MiniJavaParserVisitor<Any> {
 
         if(that!=null){
             val clzName=if(isSuper) that.type else that.realType
-            val clz=classes[clzName] ?: error("No such class: $clzName")
+            val searchClz=classes[that.type] ?: error("No such class: ${that.type}")
+
             if(ctx.THIS()!=null){
                 name="${that.type}::#new"
             }else if(ctx.SUPER()!=null){
@@ -966,13 +961,48 @@ class MyVisitor : AbstractParseTreeVisitor<Any>(), MiniJavaParserVisitor<Any> {
             }else {
                 val toLookup="$name(${arg.joinToString { it.type }})"
 
-                if(toLookup in clz.functionLookupCache){
-                    name = clz.functionLookupCache[toLookup] !!
+                //look for it in lookup cache
+                var ans=""
+                var minConversionCount=Int.MAX_VALUE
+                for((sig,res) in searchClz.functionLookupCache){
+                    val funcName=sig.replace("\\(.*?\\)".toRegex(), "")
+                    if(funcName!=name){
+                        continue
+                    }
+                    val param=sig.substringAfter("(").substringBefore(")").split(",").map{it.trim()}.filter { it.isNotEmpty() }
+                    if(param.size!=arg.size){
+                        continue
+                    }
+                    var ok=true
+                    var conversionCount=0
+                    for((index, i) in arg.withIndex()){
+                        if(!TypeChecker.check(param[index],i.type)){
+                            ok=false
+                            break
+                        }
+                        if(param[index]!=i.type){
+                            conversionCount++
+                        }
+                    }
+                    if(!ok){
+                        continue
+                    }
+                    if(conversionCount<minConversionCount){
+                        minConversionCount=conversionCount
+                        ans=sig
+                    }
                 }
+
+                if(ans!="") {
+                    name = classes[clzName]!!.functionLookupCache[ans]!!
+                }
+//                if(toLookup in clz.functionLookupCache){
+//                    name = clz.functionLookupCache[toLookup] !!
+//                }
             }
         }
 
-        return callMethod(name,arg, that)
+        return callMethod(name,arg, if("::" in name) that else null)
     }
 
     override fun visitCreator(ctx: MiniJavaParser.CreatorContext): MiniJavaObject {
@@ -1017,7 +1047,7 @@ class MyVisitor : AbstractParseTreeVisitor<Any>(), MiniJavaParserVisitor<Any> {
         if(type=="Object"){
             return
         }
-        val clz=classes[type]!!
+        val clz=classes[type] ?: error("No such type: $type")
 
         initObject(obj, clz.parent)
 

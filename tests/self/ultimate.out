@@ -1,0 +1,195 @@
+Starting Comprehensive MiniJava Test Suite...
+
+--- Lab 1: Core Language Features ---
+Initial values: i=10, c=A, b=true, s=Hello
+OK: Arithmetic precedence 1
+OK: Arithmetic precedence 2
+OK: Char arithmetic c+1
+OK: char + char = int
+OK: String concatenation with string
+OK: String concatenation with int
+OK: String concatenation with char
+OK: String concatenation with boolean expression
+OK: Logical AND, relational >
+OK: Logical OR, relational ==
+OK: Logical NOT
+OK: String equals
+OK: String equals (case sensitive)
+OK: String not equals
+OK: Ternary operator
+Inner scope shadow_var (string): Shadowed
+OK: Variable shadowing (inner scope)
+OK: Inner scope variable
+Outer scope shadow_var (int): 100
+OK: Variable shadowing (outer scope restored)
+Testing short-circuit AND (right side should not print):
+AND: Left eval
+OK: Short-circuit AND result
+Testing short-circuit OR (right side should not print):
+OR: Left eval
+OK: Short-circuit OR result
+OK: Prefix increment int
+OK: Value after prefix_inc
+OK: Prefix decrement char
+OK: Value after prefix_dec_char
+
+--- Lab 2: Procedure-Oriented Features ---
+OK: Implicit char 'a' to int 97
+OK: Explicit int 97 to char 'a' cast
+OK: Explicit int 66 to char 'B' cast
+OK: If-Else If-Else statement
+OK: Condition must be boolean (true)
+While loop test (0 to 2):
+0 1 2
+OK: While loop termination
+For loop test (0 to 9, print evens, break at 7):
+0 2 4 6 Breaking at k=7
+
+OK: For loop sum with break/continue (0+2+4+6)
+OK: Non-void method return (add)
+OK: Non-void method return (getFirstChar)
+OK: Non-void method return (getFirstChar empty)
+Executing noReturnTest (void method)
+Executing noReturnTestImplicit (void method, implicit return)
+OK: Array default initialization is null
+OK: Array length (arr1)
+OK: Array element access
+OK: Array element modification and access
+OK: Default values for new int[size]
+OK: int[] from char literals length
+OK: int[] from char literals values
+OK: Array reference copy check 1
+OK: Array reference copy modification reflected in original
+OK: Array comparison: same reference is true
+OK: Array comparison: different references (even if content same) is false
+OK: Array comparison: arr1 != null
+OK: Array comparison: null_arr == null
+OK: Multidimensional array length
+OK: Inner array length
+OK: Multidimensional array access
+OK: Inner array can be null
+OK: new int[2][] results in [null, null]
+OK: Assigning and accessing inner array of md_arr_decl
+Var test: 1000 inferred string Z false_bool [1, 2, 3]
+OK: var with array initializer
+Built-in methods test:
+123
+abcDtrue
+null
+[10, 200, 60]
+[[1, 2], [3, 4, 5], null]
+OK: length(string)
+OK: length(array)
+OK: to_char_array
+OK: to_string(char_array)
+OK: atoi(string)
+OK: atoi(string_negative)
+OK: itoa(int)
+OK: itoa(char) -> itoa(int_val_of_char) [cite: 107]
+Method overloading tests:
+processData(int): 10
+processData(string): test string
+processData(int, char): 20, X
+processData(char, int): Y, 30
+processData(int[]): [10, 200, 60]
+Calling processData('Z', 70) -> should be processData(char, int)
+processData(char, int): Z, 70
+Calling processData(70, 'Z') -> should be processData(int, char)
+processData(int, char): 70, Z
+processData(int[]): null
+
+--- Lab 3: Object-Oriented Programming ---
+Vehicle(Generic) constructor called. Tracker: 30
+OK: Vehicle object creation and method call
+OK: Vehicle constructor field init order (10+20)
+Vehicle Type: Generic
+Vehicle(CarType) constructor called. Tracker: 30
+Car(SedanX, CarType) constructor. CarTracker: 300, VehicleTracker: 30
+OK: Car object creation and method call (model)
+OK: Car object method call (type from Vehicle)
+OK: Car accessing inherited field 'type'
+OK: Car constructor field init order (100+200 for car)
+OK: Vehicle tracker within Car object
+Car Model: SedanX, Vehicle Type: CarType
+Vehicle(Automobile) constructor called. Tracker: 30
+Car(HatchbackY, Automobile) constructor. CarTracker: 300, VehicleTracker: 30
+Car(HatchbackY) via delegation. CarTracker: 3300
+OK: Car constructor delegation (model)
+OK: Car constructor delegation (type)
+OK: Car constructor delegation tracker
+OK: Vehicle tracker within delegated Car
+Vehicle() default-like constructor. Tracker: 35
+Car() implicit super. CarTracker: 500
+OK: Car implicit super (model)
+OK: Car implicit super (type from Vehicle())
+OK: Car implicit super car tracker (100+400)
+OK: Vehicle tracker with implicit super Car
+Vehicle(Automobile) constructor called. Tracker: 30
+Car(BoltZ, Automobile) constructor. CarTracker: 300, VehicleTracker: 30
+Car(BoltZ) via delegation. CarTracker: 3300
+ElectricCar constructor. Battery: 75
+OK: ElectricCar model
+OK: ElectricCar type (from Car's delegation)
+Electric Car Model: BoltZ, Battery: 75kWh, Vehicle type via ElectricCar: Automobile
+Dynamic dispatch tests:
+Vehicle(DynamicTest) constructor called. Tracker: 30
+Car(TestCar, DynamicTest) constructor. CarTracker: 300, VehicleTracker: 30
+Vehicle(Automobile) constructor called. Tracker: 30
+Car(TestECar, Automobile) constructor. CarTracker: 300, VehicleTracker: 30
+Car(TestECar) via delegation. CarTracker: 3300
+ElectricCar constructor. Battery: 100
+v_car.getNoise(): Vroom
+OK: Dynamic dispatch v_car.getNoise()
+v_ecar.getNoise(): Whirr
+OK: Dynamic dispatch v_ecar.getNoise()
+v1 (actual Vehicle).getNoise(): Silent
+OK: Base class method call v1.getNoise()
+OK: car1.getSuperNoise() calls Vehicle.getNoise()
+Type casting tests:
+Vehicle(ToCast) constructor called. Tracker: 30
+Car(CastCar, ToCast) constructor. CarTracker: 300, VehicleTracker: 30
+OK: Successful downcast (Car)veh_ref_car
+OK: Access model after successful downcast
+Vehicle(Plain) constructor called. Tracker: 30
+OK: plain_veh is not an instance of Car, cannot downcast to Car without error.
+OK: Implicit upcast Car to Vehicle
+OK: Dynamic dispatch after upcast
+OK: Casting null object reference results in null
+instanceof tests:
+OK: car1 instanceof Car
+OK: car1 instanceof Vehicle (inheritance)
+OK: v1 instanceof Vehicle
+OK: v1 instanceof Car (v1 is Vehicle actual type)
+OK: veh_ref_car (actual Car) instanceof ElectricCar
+OK: eCar1 instanceof Car
+OK: eCar1 instanceof Vehicle
+OK: null instanceof Type is false
+Null pointer safety tests:
+OK: null_car is null.
+OK: Null check for object
+print/println for class objects tests:
+Vehicle(type: Generic, tracker: 30)
+Car(model: SedanX, vehicle_type: CarType, car_tracker: 300, vehicle_tracker: 30)
+ElectricCar(model: BoltZ, battery: 75, car_tracker: 3300, vehicle_tracker: 30)
+Gizmo
+null
+== for class types tests:
+Vehicle(Automobile) constructor called. Tracker: 30
+Car(Civic, Automobile) constructor. CarTracker: 300, VehicleTracker: 30
+Car(Civic) via delegation. CarTracker: 3300
+Vehicle(Automobile) constructor called. Tracker: 30
+Car(Civic, Automobile) constructor. CarTracker: 300, VehicleTracker: 30
+Car(Civic) via delegation. CarTracker: 3300
+OK: Class == : same reference
+OK: Class == : different objects, same content
+OK: Class == : object vs null
+OK: Class == : null vs null object variable
+Vehicle() default-like constructor. Tracker: 35
+Vehicle() default-like constructor. Tracker: 35
+Car() implicit super. CarTracker: 500
+OK: Type compatibility for ==: Vehicle vs Car
+Field access more explicit test with Car1 (Model: SedanX, Type: CarType):
+OK: car1.model direct access
+OK: car1.type direct access from inherited
+All comprehensive tests completed.
+Process exits with the code 0.

@@ -1,0 +1,657 @@
+// MiniJava Comprehensive Test Case
+
+// Forward declaration of helper for output formatting
+void printTestSectionHeader(string title) {
+    println("");
+    println("--- " + title + " ---");
+}
+
+void printAssert(boolean condition, string message) {
+    assert(condition);
+    println("OK: " + message);
+}
+
+// ========================================================================
+// Lab 3: Class Definitions for OOP Tests
+// ========================================================================
+
+class Vehicle {
+    string type;
+    int creationTracker=10; // To track constructor and field init order
+
+    // Constructor 1
+    Vehicle(string t) {
+        this.creationTracker = this.creationTracker + 20; // Should be 10 (from field init) + 20 = 30
+        this.type = t;
+        println("Vehicle(" + t + ") constructor called. Tracker: " + this.creationTracker);
+    }
+
+    // Default-like constructor for inheritance tests if needed
+    Vehicle() {
+        this.creationTracker = this.creationTracker + 25; // 10 + 25 = 35
+        this.type = "Generic Vehicle";
+        println("Vehicle() default-like constructor. Tracker: " + this.creationTracker);
+    }
+
+    string getType() {
+        return this.type;
+    }
+
+    void displayInfo() {
+        println("Vehicle Type: " + this.type);
+    }
+
+    // Method to be overridden
+    string getNoise() {
+        return "Silent";
+    }
+
+    // Custom to_string for print tests
+    string to_string() {
+        return "Vehicle(type: " + this.type + ", tracker: " + this.creationTracker +")";
+    }
+
+    int getTracker() { return this.creationTracker; }
+}
+
+class Car extends Vehicle {
+    string model;
+    int carCreationTracker=100;
+
+    // Constructor 1: Using super() explicitly
+    Car(string modelName, string typeName) {
+        super(typeName); // Calls Vehicle(string)
+        this.carCreationTracker = this.carCreationTracker + 200; // 100 (field) + 200 = 300
+        this.model = modelName;
+        println("Car(" + modelName + ", " + typeName + ") constructor. CarTracker: " + this.carCreationTracker + ", VehicleTracker: " + super.creationTracker);
+        // super.creationTracker should reflect changes from Vehicle constructor
+    }
+
+    // Constructor 2: Using this() delegation
+    Car(string modelName) {
+        this(modelName, "Automobile"); // Delegates to Car(string, string)
+        this.carCreationTracker = this.carCreationTracker + 3000; // Field init happens once. This adds to existing.
+        println("Car(" + modelName + ") via delegation. CarTracker: " + this.carCreationTracker);
+        // Note: field 'model' is already set by the delegated constructor.
+    }
+
+    // Constructor 3: Implicit super()
+    Car() {
+        // Implicitly calls super() which should be Vehicle()
+        this.carCreationTracker = this.carCreationTracker + 400; // 100 + 400 = 500
+        this.model = "DefaultCar";
+        println("Car() implicit super. CarTracker: " + this.carCreationTracker);
+    }
+
+
+    void displayInfo() { // Method overriding
+        print("Car Model: " + this.model + ", ");
+        super.displayInfo(); // Call superclass method
+    }
+
+    string getModel() {
+        return this.model;
+    }
+
+    // Overriding getNoise
+    string getNoise() {
+        return "Vroom";
+    }
+
+    // Field access test: 'type' is from Vehicle
+    string getVehicleTypeViaCar() {
+        return type; // equivalent to this.type
+    }
+
+    string getSuperNoise() {
+        return super.getNoise(); // Should be "Silent"
+    }
+
+    // Custom to_string for print tests
+    string to_string() {
+        return "Car(model: " + this.model + ", vehicle_type: " + super.type + ", car_tracker: " + this.carCreationTracker + ", vehicle_tracker: " + super.creationTracker + ")";
+    }
+
+    int getCarTracker() { return this.carCreationTracker; }
+}
+
+class ElectricCar extends Car {
+    int batteryCapacity;
+
+    ElectricCar(string modelName, int capacity) {
+        super(modelName); // Calls Car(string) which delegates to Car(string,string)
+        this.batteryCapacity = capacity;
+        println("ElectricCar constructor. Battery: " + capacity);
+    }
+
+    string getNoise() { // Override again
+        return "Whirr";
+    }
+
+    void displayInfo() {
+        print("Electric Car Model: " + model + ", Battery: " + batteryCapacity + "kWh, "); // model is inherited
+        // super.displayInfo() here would call Car's displayInfo.
+        // Let's call Vehicle's one directly for variety if possible, though `super.super` is not a thing.
+        // We'll rely on Car's super.displayInfo() to show Vehicle part.
+        // For a more direct test:
+        println("Vehicle type via ElectricCar: " + super.type); // Accessing grandparent field via super
+    }
+     // Custom to_string for print tests
+    string to_string() {
+        return "ElectricCar(model: " + model + ", battery: " + batteryCapacity + ", car_tracker: " + super.carCreationTracker + ", vehicle_tracker: " + super.creationTracker + ")";
+    }
+}
+
+// Class without a to_string method
+class Gizmo {
+    int id;
+    Gizmo(int id_val) {
+        this.id = id_val;
+    }
+    string getIdString() {
+        return "GizmoID-" + itoa(id);
+    }
+}
+
+
+// ========================================================================
+// Lab 2: Global Method Definitions for Procedural Tests
+// ========================================================================
+
+// For overloading tests
+void processData(int x) {
+    println("processData(int): " + itoa(x));
+}
+
+void processData(string x) {
+    println("processData(string): " + x);
+}
+
+void processData(int x, char y) {
+    println("processData(int, char): " + itoa(x) + ", " + y);
+}
+
+void processData(char x, int y) {
+    println("processData(char, int): " + x + ", " + itoa(y));
+}
+
+void processData(int[] arr) {
+    print("processData(int[]): ");
+    println(arr);
+}
+
+// For return tests
+int add(int a, int b) {
+    return a + b;
+}
+
+char getFirstChar(string s) {
+    if (length(s) > 0) {
+        return to_char_array(s)[0];
+    }
+    return ' '; // Default for empty string
+}
+
+void noReturnTest() {
+    println("Executing noReturnTest (void method)");
+    return; // Optional return for void
+}
+
+void noReturnTestImplicit() {
+    println("Executing noReturnTestImplicit (void method, implicit return)");
+}
+
+// For short-circuit test
+boolean getTrueAndPrint(string msg) {
+    println(msg);
+    return true;
+}
+boolean getFalseAndPrint(string msg) {
+    println(msg);
+    return false;
+}
+
+
+// ========================================================================
+// Main Program Entry Point
+// ========================================================================
+int main() {
+    println("Starting Comprehensive MiniJava Test Suite...");
+
+    // --- Lab 1 & Core Language Features ---
+    printTestSectionHeader("Lab 1: Core Language Features");
+
+    // Basic types and literals
+    int i = 10;
+    char c = 'A'; // ASCII 65
+    boolean b = true;
+    string s = "Hello";
+    println("Initial values: i=" + itoa(i) + ", c=" + c + ", b=" + (b ? "true":"false") + ", s=" + s);
+
+    // Variable declaration and assignment, expressions
+    int i2 = i + 5 * 2; // 10 + 10 = 20
+    printAssert(i2 == 20, "Arithmetic precedence 1");
+    int i3 = (i + 5) * 2; // (10+5)*2 = 30
+    printAssert(i3 == 30, "Arithmetic precedence 2");
+
+    // Char arithmetic
+    char c2 = (char)(c + 1); // 'B'
+    printAssert(c2 == 'B', "Char arithmetic c+1");
+    int i_from_c = c + ' '; // 'A' (65) + ' ' (32) = 97
+    printAssert(i_from_c == 97, "char + char = int");
+
+    // String concatenation
+    string s2 = s + " World!"; // "Hello World!"
+    printAssert(s2==("Hello World!"), "String concatenation with string");
+    string s3 = "Value: " + itoa(i2); // "Value: 20"
+    printAssert(s3==("Value: 20"), "String concatenation with int");
+    string s4 = "Char is: " + c; // "Char is: A"
+    printAssert(s4==("Char is: A"), "String concatenation with char");
+    string s5 = "Boolean: " + (b ? "true" : "false"); // "Boolean: true"
+    printAssert(s5==("Boolean: true"), "String concatenation with boolean expression");
+
+    // Logical and Relational Operators
+    printAssert((i2 > i) and b, "Logical AND, relational >");
+    printAssert((i == 100) or (c == 'A'), "Logical OR, relational ==");
+    printAssert(not(i > i2), "Logical NOT");
+    printAssert(s==("Hello") == true, "String equals");
+    printAssert(s==("hello") == false, "String equals (case sensitive)");
+    printAssert(s != "Goodbye", "String not equals");
+
+    // Ternary operator
+    string ternary_res = (i2 > 15) ? "Greater" : "Smaller";
+    printAssert(ternary_res==("Greater"), "Ternary operator");
+
+    // Scope and Shadowing
+    int shadow_var = 100;
+    {
+        string shadow_var = "Shadowed"; // Lab 1 allows this [cite: 330]
+        println("Inner scope shadow_var (string): " + shadow_var);
+        printAssert(shadow_var==("Shadowed"), "Variable shadowing (inner scope)");
+        int inner_only = 50;
+        printAssert(inner_only == 50, "Inner scope variable");
+    }
+    println("Outer scope shadow_var (int): " + itoa(shadow_var));
+    printAssert(shadow_var == 100, "Variable shadowing (outer scope restored)");
+    // println(itoa(inner_only)); // This would be an error, inner_only not in scope
+
+    // Short-circuit evaluation
+    println("Testing short-circuit AND (right side should not print):");
+    boolean short_and = getFalseAndPrint("AND: Left eval") and getTrueAndPrint("AND: Right eval (SHOULD NOT HAPPEN)");
+    printAssert(short_and == false, "Short-circuit AND result");
+
+    println("Testing short-circuit OR (right side should not print):");
+    boolean short_or = getTrueAndPrint("OR: Left eval") or getFalseAndPrint("OR: Right eval (SHOULD NOT HAPPEN)");
+    printAssert(short_or == true, "Short-circuit OR result");
+
+    // Prefix increment/decrement (assuming from char ops in Lab 1 doc [cite: 298, 300])
+    int inc_val = 5;
+    printAssert(++inc_val == 6, "Prefix increment int");
+    printAssert(inc_val == 6, "Value after prefix_inc");
+    char dec_char = 'C';
+    printAssert(--dec_char == 'B', "Prefix decrement char");
+    printAssert(dec_char == 'B', "Value after prefix_dec_char");
+
+
+    // --- Lab 2: Procedure-Oriented Features ---
+    printTestSectionHeader("Lab 2: Procedure-Oriented Features");
+
+    // Type Checking and Conversions
+    int int_val = 'a'; // Implicit char to int [cite: 24]
+    printAssert(int_val == 97, "Implicit char 'a' to int 97");
+    // char char_val = int_val; // Illegal: implicit int to char not allowed [cite: 122]
+    char char_val_cast = (char)int_val; // Explicit int to char cast [cite: 25]
+    printAssert(char_val_cast == 'a', "Explicit int 97 to char 'a' cast");
+    char char_val_cast_num = (char)66; // Explicit int 66 to char 'B'
+    printAssert(char_val_cast_num == 'B', "Explicit int 66 to char 'B' cast");
+
+    // DECIMAL_LITERAL nuances [cite: 31, 33]
+    int dec_is_int = 100; // Treated as int
+    // char dec_is_char = 65; // Can be char or int, depends on context. If used as char, fine.
+    // foo(65); // Here 65 passed to method is treated as int [cite: 32, 123]
+
+    // Control Flow
+    // If-Else If-Else
+    int if_val = 20;
+    string if_res = "";
+    if (if_val < 10) {
+        if_res = "small";
+    } else if (if_val < 25) {
+        if_res = "medium";
+    } else {
+        if_res = "large";
+    }
+    printAssert(if_res==("medium"), "If-Else If-Else statement");
+    printAssert(true == true, "Condition must be boolean (true)"); // Self-evident check
+
+    // While loop
+    println("While loop test (0 to 2):");
+    int while_i = 0;
+    while (while_i < 3) {
+        print(itoa(while_i) + " ");
+        while_i = while_i + 1;
+    }
+    println(); // Newline
+    printAssert(while_i == 3, "While loop termination");
+
+    // For loop with break and continue
+    println("For loop test (0 to 9, print evens, break at 7):");
+    int for_sum = 0;
+    for (int k = 0; k < 10; k = k + 1) {
+        if (k == 7) {
+            println("Breaking at k=" + itoa(k));
+            break;
+        }
+        if (k % 2 != 0) { // If odd
+            //println("Continuing at k=" + itoa(k)); // forUpdate (k+1) happens before next condition check
+            continue;
+        }
+        print(itoa(k) + " "); // Should print 0, 2, 4, 6
+        for_sum = for_sum + k;
+    }
+    println(""); // Newline
+    printAssert(for_sum == 12, "For loop sum with break/continue (0+2+4+6)"); // 0+2+4+6 = 12
+
+    // Return statements (tested via global methods add, getFirstChar, noReturnTest)
+    printAssert(add(10, 25) == 35, "Non-void method return (add)");
+    printAssert(getFirstChar("Test") == 'T', "Non-void method return (getFirstChar)");
+    printAssert(getFirstChar("") == ' ', "Non-void method return (getFirstChar empty)");
+    noReturnTest(); // Test void return
+    noReturnTestImplicit(); // Test implicit void return
+
+    // Arrays
+    int[] arr1; // Default null [cite: 71]
+    printAssert(arr1 == null, "Array default initialization is null");
+    arr1 = new int[] {10, 20, 30}; // Initialization with new and initializer list [cite: 75]
+    int[] arr2 = {40, 50};       // Initializer list direct [cite: 72]
+    printAssert(length(arr1) == 3, "Array length (arr1)");
+    printAssert(arr1[1] == 20, "Array element access");
+
+    arr1[2] = arr1[0] + arr2[1]; // arr1[2] = 10 + 50 = 60
+    printAssert(arr1[2] == 60, "Array element modification and access");
+
+    int[] arr3_default = new int[3]; // {0, 0, 0} [cite: 75]
+    printAssert(arr3_default[0] == 0 and arr3_default[1] == 0 and arr3_default[2] == 0, "Default values for new int[size]");
+
+    char[] char_arr_from_int_init = {'a', 'b', (char)99}; // 'c'
+    int[] int_arr_from_char_init = {'X', 'Y', 'Z'}; // Implicit conversion of char literals to int [cite: 74]
+    printAssert(length(int_arr_from_char_init) == 3, "int[] from char literals length");
+    printAssert(int_arr_from_char_init[0] == 88 and int_arr_from_char_init[2] == 90, "int[] from char literals values");
+
+
+    // Array assignment (reference copy)
+    int[] arr_ref_copy = arr1;
+    printAssert(arr_ref_copy[1] == 20, "Array reference copy check 1");
+    arr_ref_copy[1] = 200;
+    printAssert(arr1[1] == 200, "Array reference copy modification reflected in original");
+
+    // Array comparison (reference equality)
+    int[] arr_identical_content = {10, 200, 60};
+    printAssert(arr1 == arr_ref_copy, "Array comparison: same reference is true");
+    printAssert(arr1 != arr_identical_content, "Array comparison: different references (even if content same) is false"); // [cite: 81]
+    printAssert(arr1 != null, "Array comparison: arr1 != null");
+
+    int[] null_arr = null;
+    printAssert(null_arr == null, "Array comparison: null_arr == null");
+
+    // Multidimensional arrays
+    int[][] md_arr = {{1,2}, {3,4,5}, null}; // [cite: 77]
+    printAssert(length(md_arr) == 3, "Multidimensional array length");
+    printAssert(length(md_arr[1]) == 3, "Inner array length");
+    printAssert(md_arr[0][1] == 2, "Multidimensional array access");
+    printAssert(md_arr[2] == null, "Inner array can be null");
+
+    int[][] md_arr_decl = new int[2][]; // Declares array of arrays, inner ones are null [cite: 78]
+    printAssert(md_arr_decl[0] == null and md_arr_decl[1] == null, "new int[2][] results in [null, null]");
+    md_arr_decl[0] = new int[]{7,8};
+    printAssert(md_arr_decl[0][1] == 8, "Assigning and accessing inner array of md_arr_decl");
+
+    // Type Inference (var)
+    var var_i = 1000; // int [cite: 89]
+    var var_c = 'Z'; // char [cite: 90]
+    var var_s = " inferred string ";
+    var var_b = false;
+    var var_arr = new int[] {1,2,3}; // int[] [cite: 91]
+    // var var_null = null; // Illegal [cite: 92]
+
+    print("Var test: " + itoa(var_i) + var_s + var_c + (var_b ? "" : " false_bool ") );
+    println(var_arr); // Should print [1, 2, 3]
+    printAssert(length(var_arr) == 3, "var with array initializer");
+
+    // Built-in Methods
+    println("Built-in methods test:");
+    println(123); // println(int)
+    print("abc");   // print(string)
+    print('D');   // print(char)
+    println(true);  // println(boolean)
+    println(null_arr); // println(null_array_ref) -> null [cite: 100]
+    println(arr1);     // println(array) -> [10, 200, 60] [cite: 99]
+    println(md_arr);   // println(multi-dim_array) -> [[?,?], [?,?,?], null] representation
+
+    assert(1 == 1); // assert(true) [cite: 103]
+    // assert(1 == 0); // This would cause assertion error, exit code 33 [cite: 11, 103]
+
+    printAssert(length("hello") == 5, "length(string)");
+    printAssert(length(arr1) == 3, "length(array)");
+    // length(null_arr); // This would cause Null Pointer Error [cite: 104]
+
+    char[] c_array = to_char_array("Hi"); // {'H', 'i'} [cite: 104]
+    printAssert(length(c_array) == 2 and c_array[0] == 'H' and c_array[1] == 'i', "to_char_array");
+    string s_from_c_array = to_string(c_array); // "Hi" [cite: 104]
+    printAssert(s_from_c_array==("Hi"), "to_string(char_array)");
+    // to_string(null); // NPE [cite: 104]
+
+    printAssert(atoi("12345") == 12345, "atoi(string)");
+    printAssert(atoi("-50") == -50, "atoi(string_negative)");
+    printAssert(itoa(9876) == "9876", "itoa(int)");
+    printAssert(itoa('C') == "67", "itoa(char) -> itoa(int_val_of_char) [cite: 107]");
+
+    // Custom Method Overloading
+    println("Method overloading tests:");
+    processData(10);              // processData(int)
+    processData("test string");   // processData(string)
+    processData(20, 'X');         // processData(int, char) conversion count 0 [cite: 136]
+    processData('Y', 30);         // processData(char, int) conversion count 0
+    processData(arr1);            // processData(int[])
+
+    // Tricky overloading with char -> int conversion
+    // Assuming methods: foo(int, char) as foo@1, foo(int, int) as foo@2 [from docs example structure]
+    // processData('A', 'B'); // If we had processData(char,char), that's 0 conversions.
+                               // If processData(int,char) exists, 1 conversion (A->int).
+                               // If processData(char,int) exists, 1 conversion (B->int).
+                               // If processData(int,int) exists, 2 conversions.
+                               // Smallest count wins. Here, matches processData(char x, int y) if 'B' converts to int (1 conv).
+                               // or processData(int x, char y) if 'A' converts to int (1 conv).
+                               // The doc example `foo('a', 'b')` matching `foo(int x1, char x2)` or `foo(int x1, int x2)`
+                               // needs clarification on how char,char maps. The example `foo('a', 'b')` matches `foo(int x1, char x2)` with 1 conversion,
+                               // OR `foo('a', 'b')` matches `foo(int x1, int x2)` with 2 conversions.
+                               // The example `foo('a', 'b');` matches `foo@1 (int, char)` with 1 conv ('a'->int).
+    println("Calling processData('Z', 70) -> should be processData(char, int)");
+    processData('Z', 70);
+    println("Calling processData(70, 'Z') -> should be processData(int, char)");
+    processData(70, 'Z');
+
+    // Parameter passing null for reference type
+    processData((int[])null);      // processData(int[]), passing null [cite: 124]
+
+
+    // --- Lab 3: Object-Oriented Features ---
+    printTestSectionHeader("Lab 3: Object-Oriented Programming");
+
+    // Class declaration and Object Creation
+    Vehicle v1 = new Vehicle("Generic"); // Calls Vehicle(string)
+    printAssert(v1.getType()==("Generic"), "Vehicle object creation and method call");
+    printAssert(v1.creationTracker == 30, "Vehicle constructor field init order (10+20)");
+    v1.displayInfo();
+
+    Car car1 = new Car("SedanX", "CarType"); // Calls Car(string, string) -> super(string)
+    printAssert(car1.getModel()==("SedanX"), "Car object creation and method call (model)");
+    printAssert(car1.getType()==("CarType"), "Car object method call (type from Vehicle)"); // getType() is from Vehicle
+    printAssert(car1.getVehicleTypeViaCar()==("CarType"), "Car accessing inherited field 'type'");
+    printAssert(car1.carCreationTracker == 300, "Car constructor field init order (100+200 for car)");
+    // Vehicle's tracker in car1: Vehicle field init (10) + Vehicle constructor (20) = 30
+    printAssert(car1.getTracker() == 30, "Vehicle tracker within Car object");
+    car1.displayInfo();
+
+    Car car2_delegated = new Car("HatchbackY"); // Calls Car(string) -> this(string,string) -> super(string)
+    printAssert(car2_delegated.getModel()==("HatchbackY"), "Car constructor delegation (model)");
+    printAssert(car2_delegated.getType()==("Automobile"), "Car constructor delegation (type)");
+    // carCreationTracker: field (100) + Car(s,s) (200) + Car(s) (3000) = 3300
+    printAssert(car2_delegated.carCreationTracker == 3300, "Car constructor delegation tracker");
+    // Vehicle tracker: field (10) + Vehicle(string) (20) = 30
+    printAssert(car2_delegated.getTracker() == 30, "Vehicle tracker within delegated Car");
+
+    Car car3_implicit_super = new Car(); // Implicitly calls Vehicle()
+    printAssert(car3_implicit_super.getModel()==("DefaultCar"), "Car implicit super (model)");
+    printAssert(car3_implicit_super.getType()==("Generic Vehicle"), "Car implicit super (type from Vehicle())");
+    printAssert(car3_implicit_super.carCreationTracker == 500, "Car implicit super car tracker (100+400)");
+    // Vehicle tracker: field (10) + Vehicle() (25) = 35
+    printAssert(car3_implicit_super.getTracker() == 35, "Vehicle tracker with implicit super Car");
+
+    ElectricCar eCar1 = new ElectricCar("BoltZ", 75);
+    printAssert(eCar1.getModel()==("BoltZ"), "ElectricCar model");
+    printAssert(eCar1.getType()==("Automobile"), "ElectricCar type (from Car's delegation)");
+    eCar1.displayInfo();
+
+    // Dynamic Dispatch (Method Overriding)
+    println("Dynamic dispatch tests:");
+    Vehicle v_car = new Car("TestCar", "DynamicTest"); // v_car declared Vehicle, actual Car
+    Vehicle v_ecar = new ElectricCar("TestECar", 100); // v_ecar declared Vehicle, actual ElectricCar
+
+    print("v_car.getNoise(): "); println(v_car.getNoise()); // Should be "Vroom" (Car's version)
+    printAssert(v_car.getNoise()==("Vroom"), "Dynamic dispatch v_car.getNoise()");
+
+    print("v_ecar.getNoise(): "); println(v_ecar.getNoise()); // Should be "Whirr" (ElectricCar's version)
+    printAssert(v_ecar.getNoise()==("Whirr"), "Dynamic dispatch v_ecar.getNoise()");
+
+    print("v1 (actual Vehicle).getNoise(): "); println(v1.getNoise()); // Should be "Silent"
+    printAssert(v1.getNoise()==("Silent"), "Base class method call v1.getNoise()");
+
+    // Super method call
+    printAssert(car1.getSuperNoise()==("Silent"), "car1.getSuperNoise() calls Vehicle.getNoise()");
+
+    // Type Casting
+    println("Type casting tests:");
+    Vehicle veh_ref_car = new Car("CastCar", "ToCast");
+    // Derived d_obj = b_obj_for_cast; // Implicit downcast not allowed
+    // Car car_ref_veh = veh_ref_car; // Also not allowed implicitly.
+
+    // Explicit Downcast (successful)
+    if (veh_ref_car instanceof Car) {
+        Car casted_car = (Car)veh_ref_car; // [cite: 231]
+        printAssert(casted_car != null, "Successful downcast (Car)veh_ref_car");
+        printAssert(casted_car.getModel()==("CastCar"), "Access model after successful downcast");
+    }
+
+    Vehicle plain_veh = new Vehicle("Plain");
+    // Explicit Downcast (should cause type error at runtime if not careful, but here we check with instanceof)
+    if (not(plain_veh instanceof Car)) {
+        println("OK: plain_veh is not an instance of Car, cannot downcast to Car without error.");
+        // Car failed_cast = (Car)plain_veh; // This would be a Type Error [cite: 232]
+    }
+
+    // Implicit Upcast
+    Vehicle upcast_veh = car1; // Implicit Car to Vehicle [cite: 228, 231]
+    printAssert(upcast_veh != null and upcast_veh.getType()==("CarType"), "Implicit upcast Car to Vehicle");
+    printAssert(upcast_veh.getNoise()==("Vroom"), "Dynamic dispatch after upcast"); // Still calls Car's method
+
+    // Casting null
+    Vehicle null_vehicle_ref = null;
+    Car null_car_ref = (Car)null_vehicle_ref;
+    printAssert(null_car_ref == null, "Casting null object reference results in null");
+
+
+    // instanceof Operator
+    println("instanceof tests:");
+    printAssert(car1 instanceof Car == true, "car1 instanceof Car");
+    printAssert(car1 instanceof Vehicle == true, "car1 instanceof Vehicle (inheritance)"); // [cite: 240]
+    printAssert(v1 instanceof Vehicle == true, "v1 instanceof Vehicle");
+    printAssert(v1 instanceof Car == false, "v1 instanceof Car (v1 is Vehicle actual type)"); //
+    printAssert(veh_ref_car instanceof ElectricCar == false, "veh_ref_car (actual Car) instanceof ElectricCar");
+    printAssert(eCar1 instanceof Car == true, "eCar1 instanceof Car");
+    printAssert(eCar1 instanceof Vehicle == true, "eCar1 instanceof Vehicle");
+
+    Vehicle null_v_instanceof = null;
+    printAssert((null_v_instanceof instanceof Vehicle) == false, "null instanceof Type is false");
+    // Type compatibility for instanceof: decl(obj) and targetType must be related [cite: 237]
+    // string str_instanceof_test = "test";
+    // boolean bad_instanceof = str_instanceof_test instanceof Vehicle; // Type Error: string not class type [cite: 235]
+    // boolean bad_instanceof2 = car1 instanceof Gizmo; // Type Error: Car and Gizmo not related (assuming Gizmo not child/parent of Vehicle)
+
+
+    // Null Pointer Errors (Verification by non-null checks before access)
+    println("Null pointer safety tests:");
+    Car null_car = null;
+    if (null_car == null) {
+        println("OK: null_car is null.");
+        // null_car.getModel(); // Would be NPE [cite: 244]
+        // null_car.displayInfo(); // Would be NPE [cite: 245]
+    }
+    printAssert(null_car == null, "Null check for object");
+
+    // Print/Println for Class Objects
+    println("print/println for class objects tests:");
+    println(v1); // Uses Vehicle.to_string() [cite: 247]
+    println(car1); // Uses Car.to_string()
+    println(eCar1); // Uses ElectricCar.to_string()
+
+    Gizmo g1 = new Gizmo(101);
+    println(g1); // No to_string(), should print real(obj) e.g. "Gizmo" or similar [cite: 246]
+
+    Vehicle null_print_obj = null;
+    println(null_print_obj); // Should print "null" [cite: 246, 248]
+
+    // == Operator for Class Types
+    println("== for class types tests:");
+    Car car_eq1 = new Car("Civic");
+    Car car_eq2 = new Car("Civic");
+    Car car_eq3 = car_eq1;
+
+    printAssert(car_eq1 == car_eq3, "Class == : same reference"); // [cite: 253]
+    printAssert(car_eq1 != car_eq2, "Class == : different objects, same content"); // [cite: 253]
+    printAssert(car_eq1 != null, "Class == : object vs null"); // [cite: 255]
+    printAssert(null == null_car, "Class == : null vs null object variable");
+
+    // Type compatibility for ==
+     Vehicle v_for_eq = new Vehicle(); Car c_for_eq = new Car();
+     boolean compatible_eq = v_for_eq == c_for_eq; // Legal due to inheritance [cite: 252]
+     printAssert(compatible_eq == false, "Type compatibility for ==: Vehicle vs Car");
+    // Gizmo g_for_eq = new Gizmo(1);
+    // boolean incompatible_eq = car_eq1 == g_for_eq; // Type Error if Car and Gizmo unrelated [cite: 252]
+
+    // this & super keyword usage (implicitly tested in class methods and constructors)
+    // e.g. car1.getVehicleTypeViaCar() uses 'this.type' implicitly.
+    // car1.displayInfo() uses 'super.displayInfo()'.
+    // Constructors use this(...) and super(...).
+
+    // Field access: object.field, this.field, super.field
+    println("Field access more explicit test with Car1 (Model: SedanX, Type: CarType):");
+    printAssert(car1.model==("SedanX"), "car1.model direct access");
+     printAssert(car1.type==("CarType"), "car1.type direct access from inherited"); // this should work
+    // If 'type' was private in Vehicle, this would fail. MiniJava docs don't specify access modifiers, assume public-like.
+
+    // Method call from variable: resolving global vs class method
+    // Assume a global method: void globalMethodTest() { println("Global method called"); }
+    // Inside a class method, if 'globalMethodTest()' is called, it should call the global one
+    // if no class method with same signature exists or if it's unambiguous.
+    // Lab 3, Task 5: "if no corresponding class method is found, we will then match it as a global static method" [cite: 213]
+    // This is complex to set up without more global methods in this test.
+
+    println("All comprehensive tests completed.");
+    return 0;
+}
+
+// Field initializations for classes (if MiniJava supports them directly in declaration)
+// For Vehicle:
+// int creationTracker = 10; // Initial value
+// For Car:
+// int carCreationTracker = 100; // Initial value
+// (The problem description for Lab 3 shows fields with initial values like `int y=18;` [cite: 164])
+// This implies fields are initialized. The constructor logic mentions fields are set to default values *before* constructor,
+// then Stage 3 field initialization happens. If an initial value is present (e.g. int y=18), it's evaluated and assigned[cite: 172, 183].
+// Let's assume these initializers are handled as part of Stage 3 of constructor process.
+// My constructor logic for trackers (e.g., this.creationTracker = this.creationTracker + 20) assumes
+// this.creationTracker already holds its initial value (or default 0 if not initialized).
+// If field initializers are syntactic sugar for assignments at the start of every constructor (after super/this call),
+// my tracker logic like `this.creationTracker = 10; this.creationTracker = this.creationTracker + 20;` would be how it's done.
+// Given `int y=18;` example, it seems direct. So `creationTracker` would be 10 before `+20`.

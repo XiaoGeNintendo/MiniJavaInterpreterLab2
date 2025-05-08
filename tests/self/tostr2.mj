@@ -29,42 +29,42 @@ class Y extends X{
 }
 
 int main(){
-    println(new A());
-    println(new B("!"));
-    println(new C("!!"));
-    println((A)null);
-    println((B)null);
-    println((C)null);
+    print(new A());
+    print(new B("!"));
+    print(new C("!!"));
+    print((A)null);
+    print((B)null);
+    print((C)null);
     A a=null;
     B b=null;
     C c=null;
-    println(a);
-    println(b);
-    println(c);
+    print(a);
+    print(b);
+    print(c);
     a=new A();
-    println(a);
+    print(a);
     a=new B("?");
-    println(a);
+    print(a);
     a=new C("??");
-    println(a);
+    print(a);
     a=new D();
-    println(a);
+    print(a);
     B b=new C("??");
-    println(b);
+    print(b);
 
     a=null;
-    println(a);
+    print(a);
     a=new X();
-    println(a);
+    print(a);
     a=new Y();
-    println(a);
-    println((X)a);
-    println((Y)a);
+    print(a);
+    print((X)a);
+    print((Y)a);
 
-    println(new int[]{1,2,3});
-    println(new boolean[]{true,false,true});
-    println(new string[]{"A","B","C","D"});
-    println(new char[]{'a','b','c','d'});
-    println(new int[][]{null,new int[]{1,2,3}});
+    print(new int[]{1,2,3});
+    print(new boolean[]{true,false,true});
+    print(new string[]{"A","B","C","D"});
+    print(new char[]{'a','b','c','d'});
+    print(new int[][]{null,new int[]{1,2,3}});
     return 0;
 }

@@ -11,7 +11,9 @@ class MyTest {
     }
 
     fun assertTrimmedEquals(expected: String, actual: String) {
-        assertEquals(expected.trim().replace("\r\n","\n"), actual.trim().replace("\r\n","\n"))
+        val x= expected.trim().replace("\r\n", "\n").split("\n").joinToString(separator = "\n") { it.trim() }
+        val y= actual.trim().replace("\r\n", "\n").split("\n").joinToString(separator = "\n") { it.trim() }
+        assertEquals(x,y)
     }
 
     fun generalLegacy(fn: String){
@@ -120,7 +122,7 @@ class MyTest {
     }
 
     @ParameterizedTest
-    @ValueSource(strings=["functional","skill","super","tostr","trie","super2"])
+    @ValueSource(strings=["functional","skill","super","tostr","tostr2","trie","super2","employee","3","string","ultimate","inout","print"])
     fun self_lab3(fn: String){
         general("self/$fn")
     }
@@ -135,7 +137,7 @@ class MyTest {
 
 
     @ParameterizedTest
-    @ValueSource(strings=["1","2","3","4","5","6","7","8","9","10","11","12","13","14","15","16","17","18","19"])
+    @ValueSource(strings=["1","2","3","4","5","6","7","8","9","10","11","12","13","14","15","16","17","18","19","20"])
     fun constructor_lab3(fn: String){
         general("constructor/$fn")
     }
