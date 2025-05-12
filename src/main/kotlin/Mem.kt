@@ -1,12 +1,21 @@
 package cn.edu.nju.cs
 
+/**
+ * Memory manager
+ */
 object Mem {
-    val funStack = ArrayList<FunctionStack>()
+    private val funStack = ArrayList<FunctionStack>()
 
-    operator fun get(name: String): MiniJavaObject{
+    /**
+     * Shorthand for getting a variable in the current stack frame
+     */
+    operator fun get(name: String): MiniJavaObject {
         return funStack.last()[name]
     }
 
+    /**
+     * Shorthand for setting a variable in the current stack frame
+     */
     operator fun set(text: String, value: MiniJavaObject) {
         funStack.last()[text] = value
     }
@@ -15,7 +24,7 @@ object Mem {
         funStack.last().pushLayer()
     }
 
-    fun popLayer(){
+    fun popLayer() {
         funStack.last().popLayer()
     }
 
@@ -27,8 +36,11 @@ object Mem {
         funStack.removeLast()
     }
 
+    /**
+     * Shorthand for creating a variable in the current stack frame
+     */
     fun create(name: String, obj: MiniJavaObject) {
-        funStack.last().create(name,obj)
+        funStack.last().create(name, obj)
     }
 
     operator fun contains(name: String): Boolean {

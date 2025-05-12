@@ -6,31 +6,31 @@ import org.antlr.v4.runtime.tree.ParseTree
 import java.io.File
 
 object Main {
-    fun run(mjFile: File):String {
+    fun run(mjFile: File): String {
         val input = CharStreams.fromFileName(mjFile.absolutePath)
-        val lexer: MiniJavaLexer = MiniJavaLexer(input)
+        val lexer = MiniJavaLexer(input)
         val tokenStream = CommonTokenStream(lexer)
-        val parser: MiniJavaParser = MiniJavaParser(tokenStream)
+        val parser = MiniJavaParser(tokenStream)
         val pt: ParseTree = parser.compilationUnit()
 
-        val x=MyVisitor()
+        val x = MyVisitor()
         x.registerBuiltinFunctions()
 
         try {
             x.visit(pt)
-        }catch(e: AssertException){
+        } catch (e: AssertException) {
             x.pew(33)
             e.printStackTrace()
-        }catch(e: TypeErrorException){
+        } catch (e: TypeErrorException) {
             x.pew(34)
             e.printStackTrace()
-        }catch(e: IndexOutOfBoundsException){
+        } catch (e: IndexOutOfBoundsException) {
             x.pew(34)
             e.printStackTrace()
-        }catch(e: NullPointerException){
+        } catch (e: NullPointerException) {
             x.pew(34)
             e.printStackTrace()
-        }catch(e: IllegalStateException){
+        } catch (e: IllegalStateException) {
             x.pew(34)
             e.printStackTrace()
         }
